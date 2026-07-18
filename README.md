@@ -8,6 +8,16 @@ Currently features real-time **Weekly Limit** and **5-Hour Limit** indicators ne
 
 ---
 
+## 📸 Preview
+
+### 1. Limits Indicator on Input Bar
+![Limits Indicator on Input Bar](assets/preview.png)
+
+### 2. Detailed Hover Tooltip Card
+![Detailed Hover Tooltip Card](assets/hover.png)
+
+---
+
 ## ✨ Features
 
 *   **Clean Inline Layout**: Positioned gracefully to the right of the model selector in the bottom toolbar flex row—never wraps, keeping the workspace neat and tidy.
