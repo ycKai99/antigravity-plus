@@ -1,46 +1,48 @@
 # Antigravity Plus
 
-一个轻量、零依赖的 Node.js 脚本工具，用于为 **Antigravity 2.0** 提供界面自定义与增强功能（首发集成：输入框右侧动态注入周额度与 5 小时额度状态提示）。
+A lightweight, zero-dependency injector for UI customizations and enhancements in **Antigravity 2.0**. 
+
+Currently features real-time **Weekly Limit** and **5-Hour Limit** indicators next to the model selector in the chat input bar, dynamically synchronized with the local gRPC backend daemon.
 
 ---
 
-## ✨ 核心特性
+## ✨ Features
 
-*   **水平布局对齐**：限额标签与原版模型选择器（`Select model`）在同一水平线上并排展示，完美融入原生 UI，不产生换行。
-*   **真实数据绑定**：通过自动获取本地 `csrfToken`，定期轮询后台的 gRPC 服务接口（`RetrieveUserQuotaSummary`），显示您账号下真实的用量百分比。
-*   **额度分组自动切换**：支持 Gemini 模型组与第三方模型组（如 Claude / GPT）的额度自动切换。当您在客户端中切换模型时，额度标签及卡片中的详情会自动变更为对应分组的数据。
-*   **发光状态灯 (Status Dot)**：胶囊状态点颜色会随着您的剩余额度动态发生变化（剩余 >50% 为绿色 safe，20%~50% 为黄色 warning，<20% 为红色 danger）。
-*   **平滑悬浮详情面板 (Tooltip Card)**：鼠标悬停在额度标签上时，会淡入滑出一个毛玻璃卡片，显示已用/剩余百分比进度条，以及下一次额度重置的刷新时间倒计时。
-
----
-
-## 🛠️ 前提条件
-
-*   **Node.js v22.0.0 或更高版本**：由于脚本使用了原生全局的 `WebSocket` 和 `fetch` 接口以保证轻量与安全，因此需要 Node.js v22+ 运行环境（无需安装任何额外的 npm 依赖包）。
-*   **正在运行的 Antigravity 2.0 客户端**。
+*   **Clean Inline Layout**: Positioned gracefully to the right of the model selector in the bottom toolbar flex row—never wraps, keeping the workspace neat and tidy.
+*   **Real-time Quota Sync**: Safely reads the local CSRF token to poll the Go backend gRPC-web endpoint (`RetrieveUserQuotaSummary`) every 5 seconds, displaying your exact remaining usage fractions.
+*   **Auto Group Detection**: Automatically detects the active model group (e.g. Gemini Models vs. Claude & GPT Models) and switches to display the correct quota buckets dynamically when you switch models in the client.
+*   **Dynamic Status Dots**: Glowing indicators transition colors automatically based on remaining capacity (Green for safe, Orange for warnings, Red for critical).
+*   **Interactive Tooltip Card**: Hovering over the pills reveals a sleek, modern glassmorphic (blurred background) card displaying detailed usage percentages, progress bars, and countdowns to the next quota reset (e.g. "1 day 11 hours left").
 
 ---
 
-## 🚀 使用方法
+## 🛠️ Prerequisites
 
-1.  启动您的 **Antigravity 2.0** 客户端。
-2.  在此项目根目录下打开终端，执行以下命令即可：
+*   **Node.js v22.0.0 or later**: The injector uses native global `WebSocket` and `fetch` APIs to keep the script 100% lightweight and dependency-free (no need to run `npm install`).
+*   **Antigravity 2.0** desktop client running.
+
+---
+
+## 🚀 Getting Started
+
+1.  Make sure your **Antigravity 2.0** client is running.
+2.  Open your terminal in the project root directory and run:
     ```bash
     node inject.js
     ```
-3.  脚本运行后会自动通过 `DevToolsActivePort` 嗅探客户端调试端口，并将限额提示组件秒级注入到您的聊天输入框右侧。
+3.  The script will automatically detect the active debugging port via `DevToolsActivePort` and hot-inject the limits interface into all active chat windows.
 
 ---
 
-## 📂 项目结构
+## 📂 Project Structure
 
-*   `inject.js`：核心注入脚本（自动判断操作系统、嗅探调试端口并完成热注入）。
-*   `package.json`：项目元数据。
-*   `.gitignore`：Git 忽略配置。
-*   `LICENSE`：MIT 开源协议。
+*   `inject.js` - Core injector script that handles OS detection, port discovery, and DOM injection.
+*   `package.json` - Node.js project metadata and start scripts.
+*   `.gitignore` - Git configuration to ignore local dependency and active port logs.
+*   `LICENSE` - Open-source license (MIT).
 
 ---
 
-## 📄 开源协议
+## 📄 License
 
-本项目基于 [MIT License](LICENSE) 协议开源。
+This project is licensed under the [MIT License](LICENSE).
