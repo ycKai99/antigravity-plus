@@ -1,5 +1,7 @@
 # Antigravity Plus
 
+[English](README.md) | [简体中文](README_zh.md)
+
 A lightweight, zero-dependency injector for UI customizations and enhancements in **Antigravity 2.0**. 
 
 Currently features real-time **Weekly Limit** and **5-Hour Limit** indicators next to the model selector in the chat input bar, dynamically synchronized with the local gRPC backend daemon.
