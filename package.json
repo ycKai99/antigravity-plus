@@ -1,0 +1,23 @@
+{
+  "name": "antigravity-plus",
+  "version": "1.0.0",
+  "description": "A lightweight, zero-dependency injector to display Weekly and 5-Hour limits dynamically on the Antigravity 2.0 input bar.",
+  "main": "inject.js",
+  "scripts": {
+    "start": "node inject.js"
+  },
+  "keywords": [
+    "antigravity",
+    "electron",
+    "theme",
+    "inject",
+    "custom-css",
+    "quota-limits",
+    "gemini"
+  ],
+  "author": "Fei-Away",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
