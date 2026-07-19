@@ -16,6 +16,9 @@ Currently features real-time **Weekly Limit** and **5-Hour Limit** indicators ne
 ### 2. Detailed Hover Tooltip Card
 ![Detailed Hover Tooltip Card](assets/hover.png)
 
+### 3. Compact Battery Skin (Skin Manager)
+![Compact Battery Skin](assets/battery_skin.png)
+
 ---
 
 ## ✨ Features
