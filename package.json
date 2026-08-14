@@ -1,11 +1,13 @@
 {
   "name": "antigravity-plus",
-  "version": "1.0.0",
-  "description": "A lightweight, zero-dependency injector to display Weekly and 5-Hour limits dynamically on the Antigravity 2.0 input bar.",
+  "version": "1.1.0",
+  "description": "A lightweight, zero-dependency injector suite providing Quota Limits, Skill Manager, Turn Rail navigation, and Custom Fonts for Antigravity 2.0.",
   "main": "inject-limits.js",
   "scripts": {
     "inject:limits": "node inject-limits.js",
     "inject:skills": "node inject-skills.js",
+    "inject:rail": "node inject-turn-rail.js",
+    "inject:font": "node inject-font.js",
     "start": "node inject-limits.js"
   },
   "keywords": [
