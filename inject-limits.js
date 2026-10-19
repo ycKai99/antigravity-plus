@@ -28,6 +28,9 @@ const injectionScript = `(() => {
     if (window.__antigravity_quota_interval) {
         clearInterval(window.__antigravity_quota_interval);
     }
+    if (window.__antigravity_quota_observer) {
+        window.__antigravity_quota_observer.disconnect();
+    }
 
     // 1. 注入 CSS 样式
     const styleEl = document.createElement('style');
@@ -561,6 +564,48 @@ const injectionScript = `(() => {
             const weeklyBucket = group.buckets.find(b => b.window === 'weekly');
             const hourlyBucket = group.buckets.find(b => b.window === '5h');
             
+            // 格式化重置时间辅助函数 (包含精确时间点与相对倒计时)
+            function formatResetTime(resetTimeStr, isWeekly = false) {
+                if (!resetTimeStr) return '未知';
+                const target = new Date(resetTimeStr);
+                const now = new Date();
+                const diffMs = target - now;
+                if (diffMs <= 0) return '即将重置';
+
+                const pad = (n) => String(n).padStart(2, '0');
+                const timeStr = \`\${pad(target.getHours())}:\${pad(target.getMinutes())}\`;
+                
+                if (isWeekly) {
+                    const dateStr = \`\${target.getMonth() + 1}月\${target.getDate()}日 \${timeStr}\`;
+                    const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
+                    const daysLeft = Math.floor(hoursLeft / 24);
+                    const remainingHours = hoursLeft % 24;
+                    let relative = '';
+                    if (daysLeft > 0) {
+                        relative = remainingHours > 0 ? \`\${daysLeft}天\${remainingHours}小时后\` : \`\${daysLeft}天后\`;
+                    } else if (hoursLeft > 0) {
+                        relative = \`\${hoursLeft}小时后\`;
+                    } else {
+                        const mins = Math.max(1, Math.round(diffMs / (1000 * 60)));
+                        relative = \`\${mins}分钟后\`;
+                    }
+                    return \`\${dateStr} 重置 (\${relative})\`;
+                } else {
+                    const totalMins = Math.round(diffMs / (1000 * 60));
+                    const hours = Math.floor(totalMins / 60);
+                    const mins = totalMins % 60;
+                    let relative = '';
+                    if (hours > 0) {
+                        relative = mins > 0 ? \`\${hours}小时\${mins}分后\` : \`\${hours}小时后\`;
+                    } else if (totalMins > 0) {
+                        relative = \`\${totalMins}分钟后\`;
+                    } else {
+                        return '即将重置';
+                    }
+                    return \`\${timeStr} 重置 (\${relative})\`;
+                }
+            }
+
             // 获取当前皮肤类型
             const container = document.querySelector('.custom-limits-container');
             const isCompact = container && container.classList.contains('skin-compact');
@@ -581,14 +626,7 @@ const injectionScript = `(() => {
                 if (wDetail) wDetail.textContent = \`剩余 \${pct}%\`;
                 if (wFill) wFill.style.width = \`\${pct}%\`;
                 if (wReset) {
-                    const hoursLeft = Math.round((new Date(weeklyBucket.resetTime) - Date.now()) / (1000 * 60 * 60));
-                    if (hoursLeft > 24) {
-                        wReset.textContent = \`\${Math.floor(hoursLeft/24)}天\${hoursLeft%24}小时后重置\`;
-                    } else if (hoursLeft > 0) {
-                        wReset.textContent = \`\${hoursLeft}小时后重置\`;
-                    } else {
-                        wReset.textContent = \`即将重置\`;
-                    }
+                    wReset.textContent = formatResetTime(weeklyBucket.resetTime, true);
                 }
                 
                 // 更新电池/胶囊宽度和状态
@@ -615,14 +653,7 @@ const injectionScript = `(() => {
                 if (hDetail) hDetail.textContent = \`剩余 \${pct}%\`;
                 if (hFill) hFill.style.width = \`\${pct}%\`;
                 if (hReset) {
-                    const minutesLeft = Math.round((new Date(hourlyBucket.resetTime) - Date.now()) / (1000 * 60));
-                    if (minutesLeft > 60) {
-                        hReset.textContent = \`\${Math.floor(minutesLeft/60)}小时\${minutesLeft%60}分钟后重置\`;
-                    } else if (minutesLeft > 0) {
-                        hReset.textContent = \`\${minutesLeft}分钟后重置\`;
-                    } else {
-                        hReset.textContent = \`即将重置\`;
-                    }
+                    hReset.textContent = formatResetTime(hourlyBucket.resetTime, false);
                 }
                 
                 // 更新电池/胶囊宽度和状态
@@ -773,10 +804,13 @@ const injectionScript = `(() => {
     }
 
     // 4. 监听 DOM 树变化，确保标签持久挂载
-    const observer = new MutationObserver(() => {
+    if (window.__antigravity_quota_observer) {
+        window.__antigravity_quota_observer.disconnect();
+    }
+    window.__antigravity_quota_observer = new MutationObserver(() => {
         insertLimitsUI();
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    window.__antigravity_quota_observer.observe(document.body, { childList: true, subtree: true });
 
     // 全局点击关闭下拉菜单
     document.addEventListener('click', (e) => {

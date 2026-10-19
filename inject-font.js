@@ -36,7 +36,7 @@ const injectionScript = `(() => {
     const styleEl = document.createElement('style');
     styleEl.id = 'antigravity-custom-font-style';
     styleEl.textContent = \`
-        /* 0. 仅将 AI 输出的消息内容区域的中文字体替换为 MiSans */
+        /* 0. 仅将 AI 输出的消息内容区域替换字体：英文 Anthropic Sans，中文 Sarasa UI SC */
         .leading-relaxed.select-text,
         .leading-relaxed.select-text p,
         .leading-relaxed.select-text span,
@@ -46,7 +46,7 @@ const injectionScript = `(() => {
         .leading-relaxed.select-text h2,
         .leading-relaxed.select-text h3,
         .leading-relaxed.select-text h4 {
-            font-family: 'Google Sans', ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+            font-family: 'Anthropic Sans', 'Anthropic Sans Web Text', 'Sarasa UI SC', '更纱黑体 UI SC', '更纱黑体 SC', ui-sans-serif, system-ui, -apple-system, sans-serif !important;
         }
 
         /* 1. 覆盖 CSS 变量，Monaco Editor 等组件可能会使用这些变量 */
@@ -119,10 +119,10 @@ async function run() {
       await inject(page.webSocketDebuggerUrl);
     }
     console.log(
-      '\n【完成】已成功在所有渲染页面中应用自定义字体 (中文字体: "Google Sans", 代码字体: "Maple Mono NF")！',
+      '\n【完成】已成功在所有渲染页面中应用自定义字体 (英文字体: "Anthropic Sans Web Text", 中文字体: "Sarasa UI SC", 代码字体: "Maple Mono NF")！',
     );
     console.log(
-      '温馨提示: 请确保您的操作系统中已经安装了 "Google Sans" 和 "Maple Mono NF" 字体。',
+      '温馨提示: 请确保您的操作系统中已经安装了 "Anthropic Sans Web Text"、"Sarasa UI SC" 和 "Maple Mono NF" 字体。',
     );
   } catch (err) {
     console.error("注入出错:", err);

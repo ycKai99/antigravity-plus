@@ -52,21 +52,57 @@
 ## 🚀 使用方法
 
 1. 启动您的 **Antigravity 2.0** 客户端。
-2. 在此项目根目录下打开终端，执行对应模块命令即可：
+2. 在此项目根目录下打开终端，运行多模块运行器或单模块注入：
 
 ```bash
-# 注入额度指示器 (默认)
+# 根据 config.json 配置同时注入多个模块 (推荐)
+npm run inject
+
+# 一键注入所有模块
+npm run inject:all
+
+# 或单独注入特定模块：
 npm run inject:limits
-
-# 注入技能管理器界面与本地服务
 npm run inject:skills
-
-# 注入对话轮次导航轨
 npm run inject:rail
-
-# 注入自定义字体样式
 npm run inject:font
 ```
+
+### ⚙️ 配置文件 (`config.json`)
+
+通过修改根目录下的 `config.json` 自定义需要启用的模块：
+
+```json
+{
+  "limits": true,
+  "skills": true,
+  "rail": true,
+  "font": false
+}
+```
+
+亦可通过命令行参数临时覆盖配置：
+
+```bash
+node inject.js limits rail       # 仅运行指定模块
+node inject.js --all             # 运行所有模块
+node inject.js --no-skills       # 排除 skills 运行配置
+node inject.js --font            # 在配置基础上额外启用 font
+node inject.js --help            # 查看所有参数帮助
+```
+
+### 🔄 撤销注入与恢复原貌
+
+您有两种便捷方式撤销注入效果：
+
+1. **命令行无缝热撤销** (无需重启客户端)：
+   ```bash
+   npm run revert
+   # 或
+   node inject.js --revert
+   ```
+2. **重载窗口**：
+   由于所有组件均通过内存动态热注入，未改动客户端的任何本地磁盘安装文件，只需在 Antigravity 界面按下 **`Ctrl+R`**（macOS 上为 `Cmd+R`）刷新窗口或重启软件，即可瞬间恢复至官方初始状态。
 
 3. 脚本运行后会自动通过 `DevToolsActivePort` 嗅探客户端调试端口，并将对应组件热注入到您的 Antigravity 客户端窗口中。
 
@@ -74,6 +110,8 @@ npm run inject:font
 
 ## 📂 项目结构
 
+* `inject.js`：多模块协同注入运行器。
+* `config.json`：模块注入配置文件。
 * `inject-limits.js`：额度指示器与皮肤管理器。
 * `inject-skills.js`：技能管理器 UI 与本地代理服务。
 * `inject-turn-rail.js`：对话轮次导航轨注入脚本。

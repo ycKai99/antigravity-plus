@@ -52,21 +52,57 @@ A lightweight, zero-dependency injector suite for UI customizations and producti
 ## 🚀 Getting Started
 
 1. Make sure your **Antigravity 2.0** client is running.
-2. Run any of the injectors from the project root:
+2. Run the multi-injector runner or individual modules from the project root:
 
 ```bash
-# Inject Quota Limits Indicator (default)
-npm run inject:limits
+# Run multiple injectors according to config.json (Recommended)
+npm run inject
 
-# Inject Skill Manager UI & local daemon
-npm run inject:skills
+# Run all injectors at once
+npm run inject:all
 
-# Inject Conversation Turn Rail
-npm run inject:rail
-
-# Inject Custom Typography
-npm run inject:font
+# Or run individual modules:
+npm run inject:limits  # Quota limits indicator
+npm run inject:skills  # Skill manager UI & local daemon
+npm run inject:rail    # Conversation turn rail
+npm run inject:font    # Custom typography
 ```
+
+### ⚙️ Configuration (`config.json`)
+
+Customize enabled modules by editing `config.json`:
+
+```json
+{
+  "limits": true,
+  "skills": true,
+  "rail": true,
+  "font": false
+}
+```
+
+You can also override options via CLI:
+
+```bash
+node inject.js limits rail       # Run only specified modules
+node inject.js --all             # Run all modules
+node inject.js --no-skills       # Run config with skills disabled
+node inject.js --font            # Run config with font enabled
+node inject.js --help            # View all options
+```
+
+### 🔄 Reverting Customizations
+
+You have two easy ways to undo the injections:
+
+1. **Hot Revert via CLI** (no restart required):
+   ```bash
+   npm run revert
+   # or
+   node inject.js --revert
+   ```
+2. **Reload Antigravity Window**:
+   Since all customizations are injected in-memory into the live renderer without altering any local Antigravity installation files, simply press **`Ctrl+R`** (or `Cmd+R` on macOS) in Antigravity or restart the application to return to the pristine state.
 
 3. The script will automatically detect the active debugging port via `DevToolsActivePort` and hot-inject into all active Antigravity windows.
 
@@ -74,6 +110,8 @@ npm run inject:font
 
 ## 📂 Project Structure
 
+* `inject.js` - Configurable multi-script injector runner.
+* `config.json` - Injector configuration file.
 * `inject-limits.js` - Quota limits indicator and skin manager.
 * `inject-skills.js` - Skill manager UI and local API proxy daemon.
 * `inject-turn-rail.js` - Conversation turn rail navigation injector.

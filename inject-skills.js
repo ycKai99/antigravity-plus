@@ -257,6 +257,15 @@ const injectionScript = `(() => {
     const prevStyle = document.getElementById('antigravity-custom-skills-style');
     if (prevStyle) prevStyle.remove();
 
+    if (window.__antigravity_skills_global_observer) {
+        window.__antigravity_skills_global_observer.disconnect();
+        window.__antigravity_skills_global_observer = null;
+    }
+    if (window.__antigravity_skills_local_observer) {
+        window.__antigravity_skills_local_observer.disconnect();
+        window.__antigravity_skills_local_observer = null;
+    }
+
     // 1. 注入全新侧边栏和双栏布局的 CSS 样式
     const styleEl = document.createElement('style');
     styleEl.id = 'antigravity-custom-skills-style';
@@ -985,28 +994,25 @@ const injectionScript = `(() => {
     }, true);
 
     // 9. 智能双重 Observer 挂载逻辑
-    let globalObserver = null;
-    let localObserver = null;
-
     function setupGlobalObserver() {
-        if (globalObserver) return;
-        globalObserver = new MutationObserver(() => {
+        if (window.__antigravity_skills_global_observer) return;
+        window.__antigravity_skills_global_observer = new MutationObserver(() => {
             insertSidebarBtn();
             if (sidebarNav) {
-                globalObserver.disconnect();
-                globalObserver = null;
+                window.__antigravity_skills_global_observer.disconnect();
+                window.__antigravity_skills_global_observer = null;
                 setupLocalObserver();
             }
         });
-        globalObserver.observe(document.body, { childList: true, subtree: true });
+        window.__antigravity_skills_global_observer.observe(document.body, { childList: true, subtree: true });
     }
 
     function setupLocalObserver() {
-        if (localObserver || !sidebarNav) return;
-        localObserver = new MutationObserver(() => {
+        if (window.__antigravity_skills_local_observer || !sidebarNav) return;
+        window.__antigravity_skills_local_observer = new MutationObserver(() => {
             insertSidebarBtn();
         });
-        localObserver.observe(sidebarNav, { childList: true, subtree: true });
+        window.__antigravity_skills_local_observer.observe(sidebarNav, { childList: true, subtree: true });
     }
 
     function initObserver() {
