@@ -1,6 +1,6 @@
 {
   "limits": true,
-  "skills": false,
   "rail": true,
-  "font": true
+  "font": true,
+  "theme": true
 }

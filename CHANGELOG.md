@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [2.0.0] - 2026-11-06
+
+### Added
+
+- Unified `theme` module adapted from Chuanban v5.0.0, with three warm light presets, composer borders, read-only SQLite session metrics, settings/zoom workarounds, and 2.5-second hot reload. Translation code and dictionaries are excluded.
+- Theme user configuration, CSS and JavaScript overrides, safe mode, environment/injection diagnostics, optional autostart/font installation, and core backup/rollback commands.
+- Managed theme daemon startup and shutdown, including stopping reinjection before hot revert.
+- Per-run theme selection through `--preset <name>` or `--preset=<name>` in both the runner and standalone theme injector, without modifying user configuration.
+
+### Changed
+
+- Redesigned quota indicators, details, and skin picker around the three theme palettes, with scoped CSS, readable remaining/reset information, keyboard access, viewport-positioned popovers, and explicit loading/error states.
+- Removed outdated effect-preview sections from both READMEs.
+- Default configuration enables `limits`, `rail`, `font`, and `theme`.
+- Preserved Anthropic Sans / Sarasa UI SC conversation fonts and Maple Mono NF code fonts; theme styles do not own font families.
+- Updated English and Chinese usage instructions and documented upstream source provenance.
+
+### Removed
+
+- Skill manager injector and its local proxy service.
+- Separate High Contrast, Pure White, and Vintage theme injectors; presets now live in the unified theme configuration.
+- Standalone interaction-enhancements injector; its settings guards are included in the theme module.
+
 ## [1.2.0] - 2026-10-19
 
 ### Added

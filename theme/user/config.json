@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "channel": "auto",
+  "preset": "high-contrast",
+  "contextLimit": 256000,
+  "modules": {
+    "metrics": true,
+    "composerWaxSeal": true,
+    "deadlockHealer": true,
+    "customCss": true,
+    "customJs": true
+  },
+  "themeVars": {}
+}

@@ -2,127 +2,118 @@
 
 [English](README.md) | [简体中文](README_zh.md)
 
-一个轻量、零依赖的 Node.js 脚本套件，用于为 **Antigravity 2.0** 桌面客户端提供界面自定义与效率增强功能。
+一个用于 **Antigravity 2.0** 的轻量、零依赖 Node.js 界面注入套件。
 
----
+## 功能模块
 
-## 📸 效果预览
+| 模块 | 命令 | 功能 |
+| --- | --- | --- |
+| `limits` | `npm run inject:limits` | 账号周额度、5 小时额度、模型组切换、重置时间、悬浮详情和胶囊／数字电池皮肤，每 5 秒查询。 |
+| `rail` | `npm run inject:rail` | 浮动对话轮次导航，显示问题标题和回答摘要，支持点击跳转及当前轮次跟踪。 |
+| `font` | `npm run inject:font` | 对话正文使用 Anthropic Sans／Sarasa UI SC，代码块和 Monaco 使用 Maple Mono NF，不附带字体文件。 |
+| `theme` | `npm run inject:theme` | 三套暖色浅色主题、输入框悬停／聚焦边框、会话性能指标、设置及缩放修复、配置热重载。启动后持续运行。 |
 
-### 1. 输入框额度提示标签
-![输入框额度提示标签](assets/preview.png)
+主题模块基于[船板 v5.0.0](https://github.com/Anarcadia/chuanban-antigravity-theme-patch/tree/b319dba8dcc4f8b5bef38aef810cb530ace192a8) 改编，不包含汉化引擎或词典。字体仍由 `font` 模块负责，保留当前 Sans／Sarasa + Maple Mono 方案。来源与署名见 [theme/UPSTREAM.md](theme/UPSTREAM.md)。
 
-### 2. 鼠标悬停详细卡片
-![鼠标悬停详细卡片](assets/hover.png)
+旧 `skills`、三个 `theme-*` 模块及 `enhancements` 模块已移除。主题预设统一通过配置选择，设置修复并入 `theme`。
 
-### 3. 数字电池皮肤 (皮肤管理器)
-![数字电池皮肤](assets/battery_skin.png)
+## 前提条件
 
----
+- Node.js 22 或更高版本。会话指标需要运行时提供 `node:sqlite`，推荐 Node.js 22.13 或更高版本；SQLite 不可用时，其余主题功能仍可运行。
+- 正在运行的 Antigravity 2.0 客户端，且本地 CDP 调试端口可连接。无需执行 `npm install`。
+- 所需字体另行安装；缺失时使用 CSS 中的后备字体。
 
-## ✨ 核心特性与模块
+## 使用方法
 
-### 1. 额度状态指示器 (`npm run inject:limits`)
-* **水平布局对齐**：限额标签与原版模型选择器在同一水平线上并排展示，完美融入原生 UI，保持界面整洁，不会产生换行。
-* **真实数据同步**：安全提取本地 `csrfToken`，每 5 秒自动轮询后台的 gRPC 服务接口（`RetrieveUserQuotaSummary`），显示您账号下真实的用量百分比。
-* **模型分组自动切换**：支持 Gemini 模型组与第三方模型组（如 Claude / GPT）的额度自动识别切换。当您在客户端中切换模型时，额度标签及卡片中的详情会自动变更为对应分组的数据。
-* **发光状态灯 (Status Dot)**：胶囊状态点颜色会随着您的剩余额度动态发生变化（剩余 >50% 为绿色 safe，20%~50% 为黄色 warning，<20% 为红色 danger）。
-* **平滑悬浮详情面板 (Tooltip Card)**：鼠标悬停在额度标签上时，会淡入滑出一个毛玻璃卡片，显示已用/剩余百分比进度条，以及下一次额度重置的刷新时间倒计时。
-* **皮肤管理器**：支持胶囊标签与数字电池皮肤切换，并自适应深色/浅色主题。
-
-### 2. 技能管理器 (`npm run inject:skills`)
-* **可视化技能管理**：向 Antigravity 界面注入可视化技能选择与查看面板。
-* **本地守护服务**：内置运行于 `9527` 端口的轻量本地代理服务，自动解析与管理全局技能。
-
-### 3. 轮次导航轨 (`npm run inject:rail`)
-* **长对话快速导航**：在对话视图左侧注入浮动导航轨。
-* **一键跳转**：轻松在长对话中的各轮次提问与回答间精确定位与跳转。
-
-### 4. 自定义字体美化 (`npm run inject:font`)
-* **界面排版优化**：注入字体样式，将 AI 输出消息的中文字体替换为 `MiSans`，代码块字体替换为 `Maple Mono NF`。
-
----
-
-## 🛠️ 前提条件
-
-* **Node.js v22.0.0 或更高版本**：由于脚本使用了原生全局的 `WebSocket` 和 `fetch` 接口以保证轻量与安全，因此需要 Node.js v22+ 运行环境（无需安装任何额外的 npm 依赖包）。
-* **正在运行的 Antigravity 2.0 客户端**。
-
----
-
-## 🚀 使用方法
-
-1. 启动您的 **Antigravity 2.0** 客户端。
-2. 在此项目根目录下打开终端，运行多模块运行器或单模块注入：
+在项目目录运行：
 
 ```bash
-# 根据 config.json 配置同时注入多个模块 (推荐)
-npm run inject
-
-# 一键注入所有模块
-npm run inject:all
-
-# 或单独注入特定模块：
-npm run inject:limits
-npm run inject:skills
-npm run inject:rail
-npm run inject:font
+npm run inject                 # 按 config.json 启用模块
+npm run inject:all             # 启用 limits、rail、font、theme
+npm run inject -- --preset claude-desktop-purewhite # 本次使用净白主题
+npm run inject:theme -- --preset vintage-deep      # 单独启动羊皮纸主题
+node inject.js limits rail     # 仅启用指定模块
+node inject.js --no-theme       # 按配置运行，但关闭 theme
+node inject.js --safe-mode      # 主题使用默认配置，跳过 theme/user 定制
+node inject.js --help
 ```
 
-### ⚙️ 配置文件 (`config.json`)
-
-通过修改根目录下的 `config.json` 自定义需要启用的模块：
+默认 `config.json` 启用四个模块：
 
 ```json
 {
   "limits": true,
-  "skills": true,
   "rail": true,
-  "font": false
+  "font": true,
+  "theme": true
 }
 ```
 
-亦可通过命令行参数临时覆盖配置：
+运行器将主题守护进程作为子进程管理。需要自动重连和热重载时，保持终端运行。`limits` 和 `rail` 为一次性注入，客户端重载后可按需重新运行。启用 `font` 时，主题重连也会复用其字体样式；字体仍可单独注入。
 
-```bash
-node inject.js limits rail       # 仅运行指定模块
-node inject.js --all             # 运行所有模块
-node inject.js --no-skills       # 排除 skills 运行配置
-node inject.js --font            # 在配置基础上额外启用 font
-node inject.js --help            # 查看所有参数帮助
+## 主题配置
+
+编辑 `theme/user/config.json`：
+
+```json
+{
+  "enabled": true,
+  "channel": "auto",
+  "preset": "high-contrast",
+  "contextLimit": 256000,
+  "modules": {
+    "metrics": true,
+    "composerWaxSeal": true,
+    "deadlockHealer": true,
+    "customCss": true,
+    "customJs": true
+  },
+  "themeVars": {}
+}
 ```
 
-### 🔄 撤销注入与恢复原貌
+- 预设：`high-contrast`、`claude-desktop-purewhite`、`vintage-deep`。三套均为浅色暖纸配色，`vintage-deep` 是羊皮纸色，不是深色模式。
+- `--preset <名称>`（或 `--preset=<名称>`）优先于配置中的预设，且在本次进程的热重载和安全模式中保持生效，不会改写配置文件。未传参数时使用配置中的预设；通过统一运行器传入时，需要启用 `theme` 模块。
+- 通道：`auto`、`stable` 或 `insiders`，用于主题窗口发现。
+- 指标显示生成速度、首字耗时、上下文用量及输出 Token；悬浮详情包含缓存使用和会话累计数据。指标只读访问本地会话 SQLite 数据库，依赖 Antigravity 的内部格式。`contextLimit` 是手动配置的容量，不会自动识别模型上限。
+- 在 `theme/user/custom.css` 追加 CSS，也可在 `themeVars` 中配置 `--ag-chat-font-size` 等变量。
+- 在 `theme/user/custom.js` 编写受信任的页面脚本；使用 `ctx.onDispose(callback)` 或返回清理函数，以支持热重载和撤销。该扩展不提供安全沙箱。
 
-您有两种便捷方式撤销注入效果：
+守护进程每 2.5 秒检查文件变化。安全模式跳过主题用户配置、CSS 和 JavaScript，不会关闭其他已选注入模块。
 
-1. **命令行无缝热撤销** (无需重启客户端)：
-   ```bash
-   npm run revert
-   # 或
-   node inject.js --revert
-   ```
-2. **重载窗口**：
-   由于所有组件均通过内存动态热注入，未改动客户端的任何本地磁盘安装文件，只需在 Antigravity 界面按下 **`Ctrl+R`**（macOS 上为 `Cmd+R`）刷新窗口或重启软件，即可瞬间恢复至官方初始状态。
+## 撤销注入
 
-3. 脚本运行后会自动通过 `DevToolsActivePort` 嗅探客户端调试端口，并将对应组件热注入到您的 Antigravity 客户端窗口中。
+```bash
+npm run revert
+# 或撤销后重载客户端窗口：
+node inject.js --revert --reload
+```
 
----
+撤销会先请求主题守护进程退出，再清理注入的界面、观察器和主题钩子。主题守护进程运行期间，仅重载窗口无法持续关闭主题，因为它会自动重新注入。
 
-## 📂 项目结构
+## 可选管理命令
 
-* `inject.js`：多模块协同注入运行器。
-* `config.json`：模块注入配置文件。
-* `inject-limits.js`：额度指示器与皮肤管理器。
-* `inject-skills.js`：技能管理器 UI 与本地代理服务。
-* `inject-turn-rail.js`：对话轮次导航轨注入脚本。
-* `inject-font.js`：自定义字体美化注入脚本。
-* `package.json`：项目元数据与 npm scripts。
-* `CHANGELOG.md`：版本变更记录。
-* `.gitignore`：Git 忽略配置。
-* `LICENSE`：MIT 开源协议。
+普通注入不会注册系统自启或安装字体，需要时显式执行：
 
----
+| 命令 | 用途 |
+| --- | --- |
+| `npm run theme:doctor` | 只读检查运行环境、字体文件、内核完整性及 CDP 状态。 |
+| `npm run theme:verify` | 只读检查符合条件窗口中的注入标记，不能代替视觉布局和各项功能验收。 |
+| `npm run theme:install` | 备份主题内核，在已有客户端参数目录中启用远程调试，并注册、启动项目运行器的登录自启。 |
+| `npm run theme:install-fonts -- --from "字体目录"` | 将用户提供的字体复制到用户字体目录，并在 Windows 注册。 |
+| `npm run theme:rollback` | 恢复上一份内核快照，保留 `theme/user`；首次安装不保证存在可回滚的旧版本。 |
+| `npm run theme:uninstall` | 移除本项目自启项、请求守护进程退出；参数文件仅在安装后未被修改时恢复。保留用户文件及已安装字体。 |
 
-## 📄 开源协议
+自启使用当前项目的绝对路径和 `--wait-for-client` 参数，请保留项目目录。运行器会等待 Antigravity 启动后再注入配置中的模块。内核快照及本地控制状态保存在 `theme/.state/`。首次开启远程调试后，需要完全退出并重新打开 Antigravity。
 
-本项目基于 [MIT License](LICENSE) 协议开源。
+## 效果预览
+
+现有额度界面示例：
+
+![额度提示](assets/preview.png)
+![额度悬浮详情](assets/hover.png)
+![数字电池皮肤](assets/battery_skin.png)
+
+## 许可与来源
+
+Antigravity Plus 原有代码适用根目录的 [LICENSE](LICENSE)。改编的上游主题代码来源见 [theme/UPSTREAM.md](theme/UPSTREAM.md)，根目录 MIT 许可不代表对该上游代码另行授予许可。

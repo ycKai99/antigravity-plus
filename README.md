@@ -2,127 +2,118 @@
 
 [English](README.md) | [简体中文](README_zh.md)
 
-A lightweight, zero-dependency injector suite for UI customizations and productivity enhancements in **Antigravity 2.0**.
+A lightweight, zero-dependency Node.js injector suite for **Antigravity 2.0**.
 
----
+## Modules
 
-## 📸 Preview
+| Module | Command | Features |
+| --- | --- | --- |
+| `limits` | `npm run inject:limits` | Weekly and 5-hour account quota, model-group switching, reset times, hover details, and pill/battery skins. Polls every 5 seconds. |
+| `rail` | `npm run inject:rail` | A floating conversation rail with turn titles, response summaries, direct jumps, and current-turn tracking. |
+| `font` | `npm run inject:font` | Anthropic Sans / Sarasa UI SC for conversation text and Maple Mono NF for code blocks and Monaco. Fonts are not bundled. |
+| `theme` | `npm run inject:theme` | Three warm light presets, composer hover/focus borders, session metrics, settings/zoom workarounds, and hot reload. Runs until stopped. |
 
-### 1. Limits Indicator on Input Bar
-![Limits Indicator on Input Bar](assets/preview.png)
+The theme adapts [Chuanban v5.0.0](https://github.com/Anarcadia/chuanban-antigravity-theme-patch/tree/b319dba8dcc4f8b5bef38aef810cb530ace192a8) without its translation engine or dictionary. Font families remain controlled by `font`, preserving the current Sans/Sarasa + Maple Mono choice. See [theme/UPSTREAM.md](theme/UPSTREAM.md).
 
-### 2. Detailed Hover Tooltip Card
-![Detailed Hover Tooltip Card](assets/hover.png)
+The previous `skills`, three `theme-*` modules, and `enhancements` module have been removed. Select a theme preset through configuration; settings workarounds are now part of `theme`.
 
-### 3. Compact Battery Skin (Skin Manager)
-![Compact Battery Skin](assets/battery_skin.png)
+## Prerequisites
 
----
+- Node.js 22 or later. SQLite metrics require a runtime providing `node:sqlite`; Node.js 22.13 or later is recommended. Other theme features work when SQLite is unavailable.
+- A running Antigravity 2.0 client with its local CDP debugging port available. No `npm install` is needed.
+- Install your chosen fonts separately. Missing fonts use CSS fallback families.
 
-## ✨ Features & Modules
+## Usage
 
-### 1. Quota Limits Indicator (`npm run inject:limits`)
-* **Clean Inline Layout**: Positioned gracefully to the right of the model selector in the bottom toolbar flex row—never wraps, keeping the workspace neat and tidy.
-* **Real-time Quota Sync**: Safely reads the local CSRF token to poll the Go backend gRPC-web endpoint (`RetrieveUserQuotaSummary`) every 5 seconds, displaying your exact remaining usage fractions.
-* **Auto Group Detection**: Automatically detects the active model group (e.g. Gemini Models vs. Claude & GPT Models) and switches to display the correct quota buckets dynamically when you switch models in the client.
-* **Dynamic Status Dots**: Glowing indicators transition colors automatically based on remaining capacity (Green for safe, Orange for warnings, Red for critical).
-* **Interactive Tooltip Card**: Hovering over the pills reveals a sleek, modern glassmorphic card displaying detailed usage percentages, progress bars, and countdowns to the next quota reset.
-* **Skin Manager**: Supports switching between default pill skin and compact battery skin, with full dark/light theme adaptation.
-
-### 2. Skill Manager (`npm run inject:skills`)
-* **Visual Skill Management**: Injects a visual skill browser directly into Antigravity 2.0 to browse, inspect, and toggle available skills.
-* **Local Daemon Service**: Runs a lightweight local proxy server on port `9527` to parse and manage skills seamlessly.
-
-### 3. Turn Rail Navigator (`npm run inject:rail`)
-* **Quick Turn Navigation**: Injects a floating rail on the left side of the conversation view.
-* **Direct Jump**: Easily jump between user prompts and agent responses across long conversation histories.
-
-### 4. Custom Font Injector (`npm run inject:font`)
-* **Typography Polish**: Injects clean typography enhancements, applying `MiSans` to AI conversational messages and `Maple Mono NF` to code blocks.
-
----
-
-## 🛠️ Prerequisites
-
-* **Node.js v22.0.0 or later**: The injectors use native global `WebSocket` and `fetch` APIs to keep the scripts 100% lightweight and dependency-free (no need to run `npm install`).
-* **Antigravity 2.0** desktop client running.
-
----
-
-## 🚀 Getting Started
-
-1. Make sure your **Antigravity 2.0** client is running.
-2. Run the multi-injector runner or individual modules from the project root:
+Run from the project directory:
 
 ```bash
-# Run multiple injectors according to config.json (Recommended)
-npm run inject
-
-# Run all injectors at once
-npm run inject:all
-
-# Or run individual modules:
-npm run inject:limits  # Quota limits indicator
-npm run inject:skills  # Skill manager UI & local daemon
-npm run inject:rail    # Conversation turn rail
-npm run inject:font    # Custom typography
+npm run inject                 # Modules enabled in config.json
+npm run inject:all             # limits, rail, font, and theme
+npm run inject -- --preset claude-desktop-purewhite # Override this run's preset
+npm run inject:theme -- --preset vintage-deep      # Theme only, with a preset
+node inject.js limits rail     # Only the named modules
+node inject.js --no-theme       # Configured modules except theme
+node inject.js --safe-mode      # Theme defaults; bypass theme/user customizations
+node inject.js --help
 ```
 
-### ⚙️ Configuration (`config.json`)
-
-Customize enabled modules by editing `config.json`:
+The default `config.json` enables all four modules:
 
 ```json
 {
   "limits": true,
-  "skills": true,
   "rail": true,
-  "font": false
+  "font": true,
+  "theme": true
 }
 ```
 
-You can also override options via CLI:
+The runner manages the theme daemon as a child process. Keep the terminal running for automatic theme reconnection and hot reload. `limits` and `rail` are one-shot injectors; rerun them after a client reload if needed. The theme reuses `font`'s CSS on reconnect when that module is selected; standalone font injection remains available.
 
-```bash
-node inject.js limits rail       # Run only specified modules
-node inject.js --all             # Run all modules
-node inject.js --no-skills       # Run config with skills disabled
-node inject.js --font            # Run config with font enabled
-node inject.js --help            # View all options
+## Theme configuration
+
+Edit `theme/user/config.json`:
+
+```json
+{
+  "enabled": true,
+  "channel": "auto",
+  "preset": "high-contrast",
+  "contextLimit": 256000,
+  "modules": {
+    "metrics": true,
+    "composerWaxSeal": true,
+    "deadlockHealer": true,
+    "customCss": true,
+    "customJs": true
+  },
+  "themeVars": {}
+}
 ```
 
-### 🔄 Reverting Customizations
+- Presets: `high-contrast`, `claude-desktop-purewhite`, and `vintage-deep`. All three are light/warm palettes; `vintage-deep` is parchment-colored, not dark mode.
+- `--preset <name>` (or `--preset=<name>`) overrides the configured preset for the current process, including during hot reload and safe mode. It does not edit the configuration file. Without this argument, the configured preset is used. The runner requires the `theme` module to be enabled when passing a preset.
+- Channels: `auto`, `stable`, or `insiders` for theme target discovery.
+- Metrics show generation speed, time to first token, context usage, output tokens, and hover details including cache use and session totals. They read conversation SQLite databases in read-only mode and depend on Antigravity's internal schema. `contextLimit` is configured capacity, not automatic model-capacity detection.
+- Add CSS to `theme/user/custom.css`, or set CSS variables such as `--ag-chat-font-size` in `themeVars`.
+- Add trusted page-context JavaScript to `theme/user/custom.js`. Register cleanup through `ctx.onDispose(callback)` or return a cleanup function. This is not a security sandbox.
 
-You have two easy ways to undo the injections:
+The daemon checks these files every 2.5 seconds. Safe mode bypasses theme user configuration, CSS, and JavaScript; it does not disable other selected injectors.
 
-1. **Hot Revert via CLI** (no restart required):
-   ```bash
-   npm run revert
-   # or
-   node inject.js --revert
-   ```
-2. **Reload Antigravity Window**:
-   Since all customizations are injected in-memory into the live renderer without altering any local Antigravity installation files, simply press **`Ctrl+R`** (or `Cmd+R` on macOS) in Antigravity or restart the application to return to the pristine state.
+## Revert
 
-3. The script will automatically detect the active debugging port via `DevToolsActivePort` and hot-inject into all active Antigravity windows.
+```bash
+npm run revert
+# Or revert and reload the client window:
+node inject.js --revert --reload
+```
 
----
+Revert requests daemon shutdown before removing injected UI, observers, and theme hooks. Reloading alone does not keep the theme disabled while its daemon is running, because it reinjects the theme.
 
-## 📂 Project Structure
+## Optional management commands
 
-* `inject.js` - Configurable multi-script injector runner.
-* `config.json` - Injector configuration file.
-* `inject-limits.js` - Quota limits indicator and skin manager.
-* `inject-skills.js` - Skill manager UI and local API proxy daemon.
-* `inject-turn-rail.js` - Conversation turn rail navigation injector.
-* `inject-font.js` - Custom font and typography injector.
-* `package.json` - Node.js project metadata and npm scripts.
-* `CHANGELOG.md` - Release and version change history.
-* `.gitignore` - Git configuration.
-* `LICENSE` - Open-source license (MIT).
+Normal injection does not register system startup or install fonts. Run these explicitly when needed:
 
----
+| Command | Purpose |
+| --- | --- |
+| `npm run theme:doctor` | Read-only environment, font-file, core-integrity, and CDP diagnostics. |
+| `npm run theme:verify` | Read-only injection-marker checks on eligible windows; does not prove visual layout or every feature works. |
+| `npm run theme:install` | Back up the core, enable remote debugging in existing client argument directories, and register/start the project runner at login. |
+| `npm run theme:install-fonts -- --from "/path/to/fonts"` | Copy supplied fonts into the user's font directory and register them on Windows. |
+| `npm run theme:rollback` | Restore a prior core snapshot, preserving `theme/user`. A fresh install may have no prior version. |
+| `npm run theme:uninstall` | Remove owned autostart entries, request daemon shutdown, and restore argument files only if unchanged since installation. User files and fonts remain. |
 
-## 📄 License
+Autostart uses this project's absolute location and `--wait-for-client`: keep the project directory in place. It waits for Antigravity before running the configured modules. Core snapshots and local control state live under `theme/.state/`. Fully restart Antigravity if remote debugging was newly enabled.
 
-This project is licensed under the [MIT License](LICENSE).
+## Preview
+
+Existing quota UI previews:
+
+![Limits indicator](assets/preview.png)
+![Quota hover details](assets/hover.png)
+![Battery skin](assets/battery_skin.png)
+
+## License
+
+The original Antigravity Plus code is covered by [LICENSE](LICENSE). Adapted theme code has separate provenance; see [theme/UPSTREAM.md](theme/UPSTREAM.md). The root MIT license does not assign a license to that upstream source.

@@ -1,20 +1,4 @@
-const fs = require('fs');
-const path = require('path');
-
-// 1. 根据不同操作系统，自动定位 Antigravity 的用户数据目录和 DevToolsActivePort 文件
-function getActivePortPath() {
-    const home = process.env.HOME || process.env.USERPROFILE;
-    switch (process.platform) {
-        case 'win32':
-            return path.join(process.env.APPDATA, 'Antigravity', 'DevToolsActivePort');
-        case 'darwin':
-            return path.join(home, 'Library', 'Application Support', 'Antigravity', 'DevToolsActivePort');
-        case 'linux':
-            return path.join(home, '.config', 'Antigravity', 'DevToolsActivePort');
-        default:
-            throw new Error(`Unsupported platform: ${process.platform}`);
-    }
-}
+const { getTargets, evaluate } = require('./cdp');
 
 // 2. 将要注入到 Antigravity 界面中的核心 JS 脚本
 const injectionScript = `(() => {
@@ -829,25 +813,8 @@ const injectionScript = `(() => {
 // 3. 执行连接并注入的逻辑
 async function run() {
     try {
-        const activePortFile = getActivePortPath();
-        if (!fs.existsSync(activePortFile)) {
-            console.error('未找到 DevToolsActivePort 文件，请确认 Antigravity 2.0 是否正在运行。');
-            return;
-        }
-        
-        const content = fs.readFileSync(activePortFile, 'utf8').split('\n');
-        const port = content[0].trim();
-        console.log(`[Discovered DevTools Port] ${port}`);
-        
-        const res = await fetch(`http://127.0.0.1:${port}/json`);
-        const targets = await res.json();
-        
-        const pages = targets.filter(t => t.type === 'page');
-        if (pages.length === 0) {
-            console.error('未找到活动渲染窗口！');
-            return;
-        }
-        
+        const pages = await getTargets();
+
         for (const page of pages) {
             console.log(`正在注入页面: "${page.title}" (${page.url})`);
             await inject(page.webSocketDebuggerUrl);
@@ -855,34 +822,13 @@ async function run() {
         console.log('\n【完成】已成功在所有渲染页面中启用限额提示组件！');
     } catch (err) {
         console.error('注入出错:', err);
+        process.exitCode = 1;
     }
 }
 
-function inject(wsUrl) {
-    return new Promise((resolve, reject) => {
-        const ws = new WebSocket(wsUrl);
-        ws.onopen = () => {
-            ws.send(JSON.stringify({
-                id: 1,
-                method: 'Runtime.evaluate',
-                params: {
-                    expression: injectionScript,
-                    returnByValue: true
-                }
-            }));
-        };
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.id === 1) {
-                console.log(`  -> 结果: ${data.result.result.value}`);
-                ws.close();
-                resolve();
-            }
-        };
-        ws.onerror = (err) => {
-            reject(err);
-        };
-    });
+async function inject(wsUrl) {
+    const result = await evaluate(wsUrl, injectionScript);
+    console.log(`  -> 结果: ${result}`);
 }
 
 run();

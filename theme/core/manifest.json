@@ -1,0 +1,11 @@
+{
+  "name": "antigravity-plus-theme",
+  "version": "1",
+  "upstream": "Anarcadia/chuanban-antigravity-theme-patch@b319dba8dcc4f8b5bef38aef810cb530ace192a8",
+  "files": {
+    "daemon.mjs": "a8cd99913dc1383a357b63ccce2d1206df91bd59e27a96fb39fddffaca617b43",
+    "runtime.js": "e0026d53b94674c156f3a66b53c850316965ede43ae897abaed117e238743a8b",
+    "theme.css": "199d5a927a7eb02b38ce0e3356e6f5cba8ddd5d090e40b3b571808de32b4a6ea",
+    "metrics.mjs": "62563b398478e69528e4a1c9f6186e83d8d0da55320ad8779d073c7fafea95bf"
+  }
+}
