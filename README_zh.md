@@ -47,9 +47,9 @@ node inject.js --help
 }
 ```
 
-界面一次性注入，完成后运行器退出。额度提示在页面内每 5 秒刷新；Context 由隐藏的后台进程每 2.5 秒检查数据库变化并更新。后台进程不监听主题文件、不重新注入界面；客户端所有窗口关闭约 7.5 秒后自动退出。重复运行会替换旧进程，日志位于 `theme/.state/metrics.log`。修改主题配置或定制文件、刷新或重启客户端后，需要重新注入。
+界面一次性注入，完成后运行器退出。额度提示在页面内每 5 秒刷新；Context 由隐藏的后台进程每 2.5 秒检查数据库变化并更新。后台进程不监听主题文件、不重新注入界面；客户端所有窗口关闭约 7.5 秒后自动退出。重复运行会替换旧进程，日志位于 `theme/.state/metrics.log`。Windows 下若停止握手超过 10 秒，运行器会核验记录中 PID 的创建时间和启动命令，清理过期记录，并仅终止已确认属于当前项目的后台进程；无法核验身份时会报错并保留该进程。修改主题配置或定制文件、刷新或重启客户端后，需要重新注入。
 
-Windows 双击 `start-antigravity.bat`，即可启动 `%LOCALAPPDATA%\Programs\Antigravity\Antigravity.exe`，等待窗口就绪，再按 `config.json` 注入。失败时窗口保留错误信息。需要已安装 Node.js，且客户端已开启本地 CDP 调试端口。
+Windows 双击 `start-antigravity.bat`，即可启动 `%LOCALAPPDATA%\Programs\Antigravity\Antigravity.exe`，等待文档加载完成、标题已设置且工作台组件已渲染，再按 `config.json` 注入；空白 localhost 启动页会继续等待。启动器会从客户端进程环境中移除继承的 `ELECTRON_RUN_AS_NODE`，确保从 Electron 终端启动时也能正常打开应用。若启动时工作台窗口暂时消失，主题注入最多等待 30 秒，Context 后台进程启动最多等待 5 秒。失败时窗口保留错误信息。需要已安装 Node.js，且客户端已开启本地 CDP 调试端口。
 
 ## 主题配置
 

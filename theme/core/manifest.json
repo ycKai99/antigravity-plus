@@ -3,9 +3,9 @@
   "version": "1",
   "upstream": "Anarcadia/chuanban-antigravity-theme-patch@b319dba8dcc4f8b5bef38aef810cb530ace192a8",
   "files": {
-    "daemon.mjs": "a8cd99913dc1383a357b63ccce2d1206df91bd59e27a96fb39fddffaca617b43",
-    "runtime.js": "e0026d53b94674c156f3a66b53c850316965ede43ae897abaed117e238743a8b",
-    "theme.css": "199d5a927a7eb02b38ce0e3356e6f5cba8ddd5d090e40b3b571808de32b4a6ea",
-    "metrics.mjs": "62563b398478e69528e4a1c9f6186e83d8d0da55320ad8779d073c7fafea95bf"
+    "daemon.mjs": "add399bac5aa3285e9857a6a5819db2eace9ca82a4c88d82846735b2a6c0dca2",
+    "runtime.js": "ad867d0009771d886cbb8ba92bc3b7f78bcd27c6f8433f4316a1c3f9e6deb95a",
+    "theme.css": "247c509ccd7990532f9626fa5853b871f27dfd8d348cb1760308aa8281e58da9",
+    "metrics.mjs": "300c7f91fd809bdd346753cc02354231d824c56e54a593ff6552625ecc89d252"
   }
 }

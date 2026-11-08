@@ -14,6 +14,7 @@ import { pidFile, stopFile, stateDir, requestStop } from '../control.mjs';
 import { createMetricsReader } from './metrics.mjs';
 import fontModule from '../../inject-font.js';
 import presetOptions from '../presets.cjs';
+import cdp from '../../cdp.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -603,6 +604,7 @@ async function sync() {
       );
 
       for (const page of pages) {
+        if (!attachedTargets.has(page.id) && !await cdp.isWorkbenchReady(page)) continue;
         activeTargetIds.add(page.id);
         if (!attachedTargets.has(page.id)) {
           attachPromises.push(attachTarget(page, endpoint));
@@ -638,7 +640,7 @@ async function sync() {
     isSyncing = false;
   }
   // Allow brief target transitions before treating the client as closed.
-  if (METRICS_ONLY && emptyMetricsPolls >= 3) await shutdown();
+  if (METRICS_ONLY && interval && emptyMetricsPolls >= 3) await shutdown();
 }
 
 console.log(
@@ -646,7 +648,18 @@ console.log(
 );
 
 await sync();
-if ((RUN_ONCE || METRICS_ONLY) && attachedTargets.size === 0) throw new Error('No Antigravity windows available for injection');
+if ((RUN_ONCE || METRICS_ONLY) && attachedTargets.size === 0) {
+  // Target discovery can briefly be empty between the splash and workbench windows.
+  // Keep the metrics worker inside the public entry's 10-second startup timeout.
+  const waitMs = RUN_ONCE ? 30000 : 5000;
+  const deadline = Date.now() + waitMs;
+  console.log('[Theme] Waiting for an Antigravity workbench window...');
+  while (attachedTargets.size === 0 && Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    await sync();
+  }
+  if (attachedTargets.size === 0) throw new Error(`No Antigravity windows available for injection after waiting ${waitMs / 1000} seconds`);
+}
 process.send?.({ type: 'ready' });
 if (RUN_ONCE) {
   for (const [, entry] of attachedTargets.entries()) {

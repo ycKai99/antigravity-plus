@@ -145,6 +145,7 @@ export function browserFixture() {
   const quota = left.appendChild(new Element('div')); quota.className = 'custom-limits-container'; quota.offsetWidth = 100;
   const right = row.appendChild(new Element('div')); right.offsetWidth = 80;
   const send = right.appendChild(new Element('button')); send.setAttribute('data-testid', 'send-button');
+  window.localStorage = context.localStorage;
   return { context, window, document, html, head, body, box, card, row, left, right, quota, history, Storage, intervals, rafs, observers, errors };
 }
 

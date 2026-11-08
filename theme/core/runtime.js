@@ -130,24 +130,30 @@
   const storagePrototype = Storage.prototype;
   const getItem = storagePrototype.getItem;
   const setItem = storagePrototype.setItem;
-  const storageBefore = new Map(['theme-color-flavor', 'theme-preset-light'].map(key => [key, getItem.call(localStorage, key)]));
+  let storage = null;
+  try {
+    storage = window.localStorage;
+  } catch (error) {
+    if (error.name !== 'SecurityError') throw error;
+  }
+  const storageBefore = new Map(storage ? ['theme-color-flavor', 'theme-preset-light'].map(key => [key, getItem.call(storage, key)]) : []);
   function syncPreset() {
-    const stored = getItem.call(localStorage, 'theme-preset-light');
+    const stored = storage ? getItem.call(storage, 'theme-preset-light') : null;
     if (MODULES.deadlockHealer && customPresets.has(stored)) {
-      setItem.call(localStorage, 'theme-preset-light', 'Default Light');
+      setItem.call(storage, 'theme-preset-light', 'Default Light');
     }
     html.setAttribute('data-ag-preset', DEFAULT_PRESET);
   }
-  setItem.call(localStorage, 'theme-color-flavor', DEFAULT_PRESET);
-  if (MODULES.deadlockHealer) {
+  if (storage) setItem.call(storage, 'theme-color-flavor', DEFAULT_PRESET);
+  if (MODULES.deadlockHealer && storage) {
     const getDescriptor = Object.getOwnPropertyDescriptor(storagePrototype, 'getItem');
     const setDescriptor = Object.getOwnPropertyDescriptor(storagePrototype, 'setItem');
     function guardedGet(key) {
       const value = getItem.call(this, key);
-      return this === localStorage && key === 'theme-preset-light' && customPresets.has(value) ? 'Default Light' : value;
+      return this === storage && key === 'theme-preset-light' && customPresets.has(value) ? 'Default Light' : value;
     }
     function guardedSet(key, value) {
-      if (this === localStorage && key === 'theme-preset-light' && customPresets.has(String(value))) value = 'Default Light';
+      if (this === storage && key === 'theme-preset-light' && customPresets.has(String(value))) value = 'Default Light';
       return setItem.call(this, key, value);
     }
     Object.defineProperty(storagePrototype, 'getItem', { ...getDescriptor, value: guardedGet });
@@ -156,6 +162,8 @@
       if (storagePrototype.getItem === guardedGet) Object.defineProperty(storagePrototype, 'getItem', getDescriptor);
       if (storagePrototype.setItem === guardedSet) Object.defineProperty(storagePrototype, 'setItem', setDescriptor);
     });
+  }
+  if (MODULES.deadlockHealer) {
     listen(document, 'click', event => {
       if (!event.target?.closest?.('[data-testid="settings-button"]')) return;
       if (!document.querySelector('[role="dialog"]') && new URLSearchParams(location.search).get('settingsOpen') === 'true') {
@@ -182,8 +190,8 @@
   }
   cleanups.push(() => {
     for (const [key, value] of storageBefore) {
-      if (value === null) localStorage.removeItem(key);
-      else setItem.call(localStorage, key, value);
+      if (value === null) storage.removeItem(key);
+      else setItem.call(storage, key, value);
     }
   });
   syncPreset();

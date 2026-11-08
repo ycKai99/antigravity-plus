@@ -15,7 +15,7 @@ function fixture(t) {
     recursive: true, filter: source => !source.includes(path.sep + '.state')
   });
   for (const file of ['inject-font.js', 'cdp.js']) fs.copyFileSync(path.join(root, file), path.join(dir, file));
-  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }));
   return dir;
 }
 function start(dir, server, extra = [], entry = 'theme/core/daemon.mjs') {
@@ -46,6 +46,59 @@ test('public theme entry exits with a metrics worker and preserves the injected 
   fs.writeFileSync(path.join(dir, 'theme', '.state', 'stop'), 'stop');
   await until(() => !fs.existsSync(pid), 'metrics worker stopped');
   assert.equal(server.requests.some(r => r.params?.expression === 'window.__antigravity_theme_dispose?.()'), false);
+});
+
+test('one-shot injection waits through splash and empty target lists', { timeout: 10000 }, async t => {
+  let polls = 0;
+  const dir = fixture(t), server = await mockCdp({ targetList: targets => {
+    polls++;
+    if (polls === 1) return [{ ...targets[0], url: 'data:text/html,Loading' }, targets[1]];
+    return polls === 2 ? [] : targets;
+  } });
+  t.after(() => server.close());
+  const proc = start(dir, server, ['--once']);
+  t.after(() => { if (proc.child.exitCode === null) proc.child.kill(); });
+  assert.equal(await proc.exited, 0, proc.stderr());
+  assert.ok(polls >= 3);
+  assert.equal(server.requests.filter(r => r.params?.expression?.includes('function applyTheme')).length, 1);
+});
+
+test('one-shot injection waits for the application DOM on an existing localhost target', { timeout: 10000 }, async t => {
+  let ready = false, checks = 0;
+  const dir = fixture(t), server = await mockCdp({ workbenchReady: () => { checks++; return ready; } });
+  t.after(() => server.close());
+  const proc = start(dir, server, ['--once']);
+  t.after(() => { if (proc.child.exitCode === null) proc.child.kill(); });
+  await until(() => checks >= 2, 'loading document readiness checks');
+  assert.equal(proc.child.exitCode, null);
+  assert.equal(server.requests.some(r => r.params?.expression?.includes('function applyTheme')), false);
+  ready = true;
+  assert.equal(await proc.exited, 0, proc.stderr());
+  assert.equal(server.requests.filter(r => r.params?.expression?.includes('function applyTheme')).length, 1);
+});
+
+test('metrics-only startup waits for a workbench without injecting the theme', { timeout: 10000 }, async t => {
+  let polls = 0;
+  const dir = fixture(t), server = await mockCdp({ targetList: targets => ++polls < 5 ? [] : targets });
+  t.after(() => server.close());
+  const proc = start(dir, server, ['--metrics-only']);
+  t.after(() => { if (proc.child.exitCode === null) proc.child.kill(); });
+  await until(() => server.requests.some(r => r.method === 'Runtime.addBinding'), 'delayed metrics attachment');
+  assert.ok(polls >= 5);
+  assert.equal(server.requests.some(r => r.params?.expression?.includes('function applyTheme')), false);
+  fs.writeFileSync(path.join(dir, 'theme', '.state', 'stop'), 'stop');
+  assert.equal(await proc.exited, 0, proc.stderr());
+});
+
+test('metrics-only startup fails after its bounded wait when no workbench appears', { timeout: 10000 }, async t => {
+  const dir = fixture(t), server = await mockCdp({ empty: true });
+  t.after(() => server.close());
+  const proc = start(dir, server, ['--metrics-only']);
+  t.after(() => { if (proc.child.exitCode === null) proc.child.kill(); });
+  assert.notEqual(await proc.exited, 0);
+  assert.match(proc.stderr(), /No Antigravity windows available for injection after waiting 5 seconds/);
+  assert.equal(server.requests.length, 0);
+  assert.equal(fs.existsSync(path.join(dir, 'theme', '.state', 'daemon.pid')), false);
 });
 
 test('metrics-only worker does not inject or watch files and exits after the client closes', { timeout: 15000 }, async t => {

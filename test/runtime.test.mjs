@@ -44,6 +44,29 @@ test('hot reload/dispose restores native hooks, storage, CSS variables and liste
   assert.deepEqual(f.errors, []);
 });
 
+test('storage-denied documents still initialize, reload and dispose the theme', () => {
+  const f = browserFixture();
+  const originalGet = f.Storage.prototype.getItem;
+  const originalSet = f.Storage.prototype.setItem;
+  Object.defineProperty(f.window, 'localStorage', { get() {
+    const error = new Error('Access is denied for this document');
+    error.name = 'SecurityError';
+    throw error;
+  } });
+  apply(f);
+  assert.equal(f.html.getAttribute('data-ag-preset'), boot().preset);
+  assert.ok(f.document.getElementById('ag-custom-fonts'));
+  assert.equal(f.Storage.prototype.getItem, originalGet);
+  assert.equal(f.Storage.prototype.setItem, originalSet);
+  apply(f, { version: 'reloaded' });
+  assert.equal(f.window.__ag_patch_version, 'reloaded');
+  f.window.__antigravity_theme_dispose();
+  assert.equal(f.intervals.size, 0);
+  assert.equal(f.window.count('keydown'), 0);
+  assert.equal(f.document.getElementById('ag-custom-fonts'), null);
+  assert.deepEqual(f.errors, []);
+});
+
 test('metrics wraps below a narrow footer without moving the quota or send group', () => {
   const f = browserFixture();
   apply(f);

@@ -10,9 +10,9 @@ import { mockCdp, until } from './mock-cdp.mjs';
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 function fixture(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ag-plus-transport-'));
-  for (const file of ['inject.js', 'inject-font.js', 'inject-theme.mjs', 'cdp.js', 'config.json']) fs.copyFileSync(path.join(root, file), path.join(dir, file));
+  for (const file of ['inject.js', 'inject-limits.js', 'inject-font.js', 'inject-theme.mjs', 'cdp.js', 'config.json']) fs.copyFileSync(path.join(root, file), path.join(dir, file));
   fs.cpSync(path.join(root, 'theme'), path.join(dir, 'theme'), { recursive: true, filter: source => !source.includes(path.sep + '.state') });
-  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }));
   return dir;
 }
 function portFile(dir, name, port) {
@@ -41,7 +41,7 @@ test('retained font injection discovers both channels and excludes external targ
   const proc = start(t, dir, ['font']);
   assert.equal(await proc.exited, 0, proc.output());
   for (const server of [stable, insiders]) {
-    const evaluations = server.requests.filter(request => request.method === 'Runtime.evaluate');
+    const evaluations = server.requests.filter(request => request.method === 'Runtime.evaluate' && !request.params.expression.startsWith('(document.readyState'));
     assert.equal(evaluations.length, 1);
     assert.match(evaluations[0].params.expression, /Maple Mono NF/);
   }
@@ -94,9 +94,45 @@ test('runner forwards split and equals preset arguments to the theme without cha
       request.params.expression.includes('function applyTheme')).params.expression;
     assert.ok(injection.includes('"preset":"' + preset + '"'));
     assert.equal(fs.readFileSync(configFile, 'utf8'), before);
+    assert.equal(await proc.exited, 0, proc.output());
     const control = await import(pathToFileURL(path.join(dir, 'theme', 'control.mjs')));
     await control.requestStop();
-    assert.equal(await proc.exited, 0, proc.output());
   }
+});
+
+test('launch runner tolerates window transitions after preflight and before metrics startup', { timeout: 15000 }, async t => {
+  let polls = 0;
+  const dir = fixture(t), server = await mockCdp({ targetList: targets => {
+    polls++;
+    if (polls === 2) return [{ ...targets[0], url: 'data:text/html,Loading' }, targets[1]];
+    return [3, 5, 6].includes(polls) ? [] : targets;
+  } });
+  t.after(() => server.close());
+  portFile(dir, 'Antigravity', server.port);
+  const proc = start(t, dir, ['theme', '--wait-for-client']);
+  assert.equal(await proc.exited, 0, proc.output());
+  const control = await import(pathToFileURL(path.join(dir, 'theme', 'control.mjs')));
+  await control.requestStop();
+  assert.ok(polls >= 7);
+  assert.equal(server.requests.filter(r => r.params?.expression?.includes('function applyTheme')).length, 1);
+  assert.match(proc.output(), /All selected modules injected successfully/);
+});
+
+test('launch runner leaves the bootstrap document untouched until the application is ready', { timeout: 15000 }, async t => {
+  let ready = false, checks = 0;
+  const dir = fixture(t), server = await mockCdp({ workbenchReady: () => { checks++; return ready; } });
+  t.after(() => server.close());
+  portFile(dir, 'Antigravity', server.port);
+  const proc = start(t, dir, ['--wait-for-client']);
+  await until(() => checks >= 1, 'bootstrap readiness check');
+  assert.equal(proc.child.exitCode, null);
+  assert.equal(server.requests.some(r => r.params?.expression?.includes('Maple Mono NF')), false);
+  assert.equal(server.requests.some(r => r.params?.expression?.includes('function applyTheme')), false);
+  ready = true;
+  assert.equal(await proc.exited, 0, proc.output());
+  const control = await import(pathToFileURL(path.join(dir, 'theme', 'control.mjs')));
+  await control.requestStop();
+  assert.equal(server.requests.filter(r => r.params?.expression?.includes('function applyTheme')).length, 1);
+  assert.match(proc.output(), /All selected modules injected successfully/);
 });
 

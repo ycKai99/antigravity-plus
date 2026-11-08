@@ -12,6 +12,12 @@ function isWorkbench(target) {
     }
 }
 
+async function isWorkbenchReady(target) {
+    return await evaluate(target.webSocketDebuggerUrl,
+        '(document.readyState === "complete" && !!document.title.trim() && ' +
+        '!!document.querySelector(".monaco-workbench, [id=\\"antigravity.agentSidePanelInputBox\\"], [data-testid=\\"home-greeting\\"]"))') === true;
+}
+
 // Both release channels use the same injection contract.
 async function getTargets() {
     const home = process.env.HOME || process.env.USERPROFILE;
@@ -46,7 +52,9 @@ async function getTargets() {
         if (!response.ok) continue;
         const targets = await response.json();
         if (!Array.isArray(targets)) throw new Error('Invalid CDP target list on port ' + port);
-        for (const target of targets.filter(isWorkbench)) pages.set(target.webSocketDebuggerUrl, target);
+        for (const target of targets.filter(isWorkbench)) {
+            if (await isWorkbenchReady(target)) pages.set(target.webSocketDebuggerUrl, target);
+        }
     }
     if (!pages.size) {
         const error = new Error('No Antigravity workbench found. Start Antigravity with remote debugging enabled.');
@@ -88,5 +96,5 @@ function evaluate(wsUrl, expression) {
     });
 }
 
-module.exports = { getTargets, evaluate };
+module.exports = { getTargets, evaluate, isWorkbenchReady };
 

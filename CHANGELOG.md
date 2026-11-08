@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-11-08
+
+### Fixed
+
+- Wait for a fully loaded Antigravity workbench before injecting, and tolerate startup transitions between splash and workbench windows.
+- Remove inherited `ELECTRON_RUN_AS_NODE` when launching the Windows client and verify a stale background process before terminating it.
+- Allow theme initialization and cleanup when browser storage is unavailable because the document raises `SecurityError`.
+
 ## [3.0.0] - 2026-11-08
 
 ### Added

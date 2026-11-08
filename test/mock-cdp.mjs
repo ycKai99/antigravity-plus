@@ -9,16 +9,17 @@ function encode(message) {
   else { header = Buffer.alloc(10); header[0] = 0x81; header[1] = 127; header.writeBigUInt64BE(BigInt(data.length), 2); }
   return Buffer.concat([header, data]);
 }
-export async function mockCdp({ failEvaluation = false, empty = false, pageId = 'workbench', cascadeId = '' } = {}) {
+export async function mockCdp({ failEvaluation = false, empty = false, pageId = 'workbench', cascadeId = '', targetList = null, workbenchReady = () => true } = {}) {
   const requests = [], sockets = new Set(), scripts = new Map();
   let sequence = 0, port;
   const server = http.createServer((request, response) => {
     response.setHeader('content-type', 'application/json');
-    response.end(JSON.stringify(empty ? [] : [
+    const targets = empty ? [] : [
       { id: pageId, type: 'page', title: 'Antigravity', url: 'https://127.0.0.1:' + port + '/c/12345678-1234-1234-1234-123456789abc',
         webSocketDebuggerUrl: 'ws://127.0.0.1:' + port + '/devtools/page/workbench' },
       { id: 'external', type: 'page', title: 'External', url: 'https://example.com', webSocketDebuggerUrl: 'ws://127.0.0.1:' + port + '/external' }
-    ]));
+    ];
+    response.end(JSON.stringify(targetList ? targetList(targets) : targets));
   });
   server.on('upgrade', (request, socket) => {
     sockets.add(socket);
@@ -58,7 +59,8 @@ export async function mockCdp({ failEvaluation = false, empty = false, pageId = 
             continue;
           }
           const expression = message.params.expression;
-          if (expression.startsWith('window.__ag_patch_version ===')) result = { result: { value: true } };
+          if (expression.startsWith('(document.readyState')) result = { result: { value: workbenchReady() } };
+          else if (expression.startsWith('window.__ag_patch_version ===')) result = { result: { value: true } };
           else if (expression.startsWith('(function(){')) result = { result: { value: cascadeId } };
           else result = { result: { value: { enabled: true } } };
         }

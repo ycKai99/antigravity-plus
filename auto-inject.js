@@ -8,7 +8,9 @@ if (launchIndex !== -1) {
     args.splice(launchIndex, 1);
     const exePath = path.join(process.env.LOCALAPPDATA, 'Programs', 'Antigravity', 'Antigravity.exe');
     if (!fs.existsSync(exePath)) throw new Error(`Antigravity not found: ${exePath}`);
-    const client = spawn(exePath, [], { detached: true, stdio: 'ignore' });
+    const env = { ...process.env };
+    delete env.ELECTRON_RUN_AS_NODE;
+    const client = spawn(exePath, [], { detached: true, stdio: 'ignore', env });
     client.on('error', error => { console.error(error.message); process.exitCode = 1; });
     client.unref();
 }
