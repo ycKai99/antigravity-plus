@@ -2,10 +2,12 @@
   "enabled": true,
   "channel": "auto",
   "preset": "high-contrast",
+  "preset2": "claude-desktop-purewhite",
+  "preset3": "vintage-deep",
   "contextLimit": 256000,
   "modules": {
     "metrics": true,
-    "composerWaxSeal": true,
+    "composerWaxSeal": false,
     "deadlockHealer": true,
     "customCss": true,
     "customJs": true

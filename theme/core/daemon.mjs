@@ -49,6 +49,7 @@ function getArg(flag, fallback = null) {
 
 const SAFE_MODE = hasFlag('--safe-mode');
 const RUN_ONCE = hasFlag('--once');
+const METRICS_ONLY = hasFlag('--metrics-only');
 const CLI_CHANNEL = getArg('--channel', null);
 const CLI_PRESET = presetOptions.readPresetArg(args);
 
@@ -452,8 +453,8 @@ function attachTarget(target, endpoint) {
         await send('Page.enable');
         await send('Runtime.enable');
         await send('Runtime.addBinding', { name: '__agRequestMetrics' });
-        if (!RUN_ONCE) await updateDocumentScript();
-        const ok = await inject();
+        if (!RUN_ONCE && !METRICS_ONLY) await updateDocumentScript();
+        const ok = METRICS_ONLY || await inject();
         if (!ok) {
           if (newDocumentScriptId) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: newDocumentScriptId });
           await send('Runtime.evaluate', { expression: 'window.__antigravity_theme_dispose?.()', returnByValue: true });
@@ -493,7 +494,7 @@ function attachTarget(target, endpoint) {
             }
             return;
           }
-          if (!initialAttachDone) return;
+          if (!initialAttachDone || METRICS_ONLY) return;
           if (
             msg.method === 'Page.frameNavigated' ||
             msg.method === 'Page.loadEventFired' ||
@@ -530,7 +531,7 @@ function attachTarget(target, endpoint) {
         dispose: async () => {
           if (navDebounceTimer) clearTimeout(navDebounceTimer);
           if (newDocumentScriptId) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: newDocumentScriptId });
-          await send('Runtime.evaluate', { expression: 'window.__antigravity_theme_dispose?.()', returnByValue: true });
+          if (!METRICS_ONLY) await send('Runtime.evaluate', { expression: 'window.__antigravity_theme_dispose?.()', returnByValue: true });
           ws.close();
         },
         endpoint,
@@ -560,13 +561,14 @@ async function shutdown() {
 
 let isSyncing = false;
 let syncTickCount = 0;
+let emptyMetricsPolls = 0;
 async function sync() {
   if (!RUN_ONCE && fs.existsSync(stopFile)) { await shutdown(); return; }
   if (isSyncing || shuttingDown) return;
   isSyncing = true;
   syncTickCount = (syncTickCount + 1) % 6000;
   try {
-    const bundleChanged = rebuildBundleIfNeeded();
+    const bundleChanged = METRICS_ONLY ? false : rebuildBundleIfNeeded();
     const shouldHeartbeatCheck = bundleChanged || syncTickCount % 6 === 1;
 
     const activeTargetIds = new Set();
@@ -609,7 +611,7 @@ async function sync() {
           if (bundleChanged && entry.send) {
             await entry.updateDocumentScript();
           }
-          if (shouldHeartbeatCheck && entry.checkAndInject) await entry.checkAndInject();
+          if (!METRICS_ONLY && shouldHeartbeatCheck && entry.checkAndInject) await entry.checkAndInject();
           if (entry.syncMetricsForSession) await entry.syncMetricsForSession(bundleChanged);
         }
       }
@@ -631,9 +633,12 @@ async function sync() {
         attachedTargets.delete(id);
       }
     }
+    if (METRICS_ONLY) emptyMetricsPolls = activeTargetIds.size === 0 ? emptyMetricsPolls + 1 : 0;
   } finally {
     isSyncing = false;
   }
+  // Allow brief target transitions before treating the client as closed.
+  if (METRICS_ONLY && emptyMetricsPolls >= 3) await shutdown();
 }
 
 console.log(
@@ -641,6 +646,7 @@ console.log(
 );
 
 await sync();
+if ((RUN_ONCE || METRICS_ONLY) && attachedTargets.size === 0) throw new Error('No Antigravity windows available for injection');
 process.send?.({ type: 'ready' });
 if (RUN_ONCE) {
   for (const [, entry] of attachedTargets.entries()) {

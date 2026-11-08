@@ -9,7 +9,7 @@ function encode(message) {
   else { header = Buffer.alloc(10); header[0] = 0x81; header[1] = 127; header.writeBigUInt64BE(BigInt(data.length), 2); }
   return Buffer.concat([header, data]);
 }
-export async function mockCdp({ failEvaluation = false, empty = false, pageId = 'workbench' } = {}) {
+export async function mockCdp({ failEvaluation = false, empty = false, pageId = 'workbench', cascadeId = '' } = {}) {
   const requests = [], sockets = new Set(), scripts = new Map();
   let sequence = 0, port;
   const server = http.createServer((request, response) => {
@@ -59,7 +59,7 @@ export async function mockCdp({ failEvaluation = false, empty = false, pageId = 
           }
           const expression = message.params.expression;
           if (expression.startsWith('window.__ag_patch_version ===')) result = { result: { value: true } };
-          else if (expression.startsWith('(function(){')) result = { result: { value: '' } };
+          else if (expression.startsWith('(function(){')) result = { result: { value: cascadeId } };
           else result = { result: { value: { enabled: true } } };
         }
         socket.write(encode({ id: message.id, result }));

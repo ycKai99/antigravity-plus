@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-11-08
+
+### Added
+
+- Windows launcher that waits for Antigravity to become ready and injects the configured modules.
+- Custom theme styling and positioning for the Overview metrics display.
+
+### Changed
+
+- Public injection commands inject the UI once and exit. Quota polling continues in the page; a hidden Context worker refreshes database metrics every 2.5 seconds and exits when the client closes. Configuration edits and client reloads require re-injection.
+- Simplified quota indicators to pill styling and updated their details popover.
+
+### Removed
+
+- Standalone turn rail navigator injector (`inject-turn-rail.js`), `inject:rail` script, and `rail` module options, as Antigravity 2.0 now natively provides conversation turn navigation.
+
 ## [2.0.0] - 2026-11-06
 
 ### Added

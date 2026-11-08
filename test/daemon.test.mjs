@@ -8,6 +8,7 @@ import test from 'node:test';
 import { mockCdp, until } from './mock-cdp.mjs';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const { DatabaseSync } = await import('node:sqlite').catch(() => ({}));
 function fixture(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ag-plus-daemon-'));
   fs.cpSync(path.join(root, 'theme'), path.join(dir, 'theme'), {
@@ -17,10 +18,10 @@ function fixture(t) {
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
-function start(dir, server, extra = []) {
+function start(dir, server, extra = [], entry = 'theme/core/daemon.mjs') {
   const portFile = path.join(dir, 'port');
   fs.writeFileSync(portFile, String(server.port));
-  const child = spawn(process.execPath, ['theme/core/daemon.mjs', '--channel', 'stable', '--port-file', portFile, ...extra], {
+  const child = spawn(process.execPath, [entry, '--channel', 'stable', '--port-file', portFile, ...extra], {
     cwd: dir, stdio: ['ignore', 'pipe', 'pipe']
   });
   let stdout = '', stderr = '';
@@ -29,6 +30,59 @@ function start(dir, server, extra = []) {
   const exited = new Promise(resolve => child.on('exit', code => resolve(code)));
   return { child, exited, stdout: () => stdout, stderr: () => stderr };
 }
+
+test('public theme entry exits with a metrics worker and preserves the injected UI on worker stop', { timeout: 15000 }, async t => {
+  const dir = fixture(t), server = await mockCdp();
+  t.after(() => server.close());
+  fs.copyFileSync(path.join(root, 'inject-theme.mjs'), path.join(dir, 'inject-theme.mjs'));
+  const proc = start(dir, server, [], 'inject-theme.mjs');
+  t.after(() => { if (proc.child.exitCode === null) proc.child.kill(); });
+  assert.equal(await proc.exited, 0, proc.stderr());
+  assert.ok(server.requests.some(r => r.params?.expression?.includes('function applyTheme')));
+  assert.equal(server.scripts.size, 0);
+  assert.equal(server.requests.some(r => r.params?.expression === 'window.__antigravity_theme_dispose?.()'), false);
+  const pid = path.join(dir, 'theme', '.state', 'daemon.pid');
+  assert.equal(fs.existsSync(pid), true);
+  fs.writeFileSync(path.join(dir, 'theme', '.state', 'stop'), 'stop');
+  await until(() => !fs.existsSync(pid), 'metrics worker stopped');
+  assert.equal(server.requests.some(r => r.params?.expression === 'window.__antigravity_theme_dispose?.()'), false);
+});
+
+test('metrics-only worker does not inject or watch files and exits after the client closes', { timeout: 15000 }, async t => {
+  const dir = fixture(t), server = await mockCdp();
+  const proc = start(dir, server, ['--metrics-only']);
+  t.after(() => { if (proc.child.exitCode === null) proc.child.kill(); });
+  t.after(() => server.close());
+  await until(() => fs.existsSync(path.join(dir, 'theme', '.state', 'daemon.pid')), 'worker started');
+  await until(() => server.requests.some(r => r.method === 'Runtime.addBinding'), 'metrics binding');
+  fs.appendFileSync(path.join(dir, 'theme', 'user', 'custom.css'), '\n.worker-test {}');
+  await server.close();
+  assert.equal(await proc.exited, 0, proc.stderr());
+  assert.equal(server.scripts.size, 0);
+  assert.equal(server.requests.some(r => r.params?.expression?.includes('function applyTheme')), false);
+});
+
+test('metrics-only worker pushes changed SQLite metrics without re-injecting UI', { timeout: 15000, skip: !DatabaseSync }, async t => {
+  const dir = fixture(t), cascadeId = '11111111-2222-3333-4444-555555555555';
+  const server = await mockCdp({ cascadeId });
+  t.after(() => server.close());
+  const db = new DatabaseSync(path.join(dir, cascadeId + '.db'));
+  db.exec('CREATE TABLE gen_metadata (idx INTEGER PRIMARY KEY, data BLOB); CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INTEGER)');
+  // Protobuf: generation metadata -> usage -> input tokens.
+  db.prepare('INSERT INTO gen_metadata VALUES (0, ?)').run(Buffer.from([10, 4, 34, 2, 16, 100]));
+  db.close();
+  const proc = start(dir, server, ['--metrics-only', '--conversations-dir', dir]);
+  t.after(() => { if (proc.child.exitCode === null) proc.child.kill(); });
+  const pushes = () => server.requests.filter(r => r.params?.expression?.startsWith('window.__ag_render_metrics &&'));
+  await until(() => pushes().some(r => r.params.expression.includes('Ctx 100/')), 'initial metrics');
+  const updated = new DatabaseSync(path.join(dir, cascadeId + '.db'));
+  updated.prepare('UPDATE gen_metadata SET data = ?').run(Buffer.from([10, 4, 34, 2, 16, 120]));
+  updated.close();
+  await until(() => pushes().some(r => r.params.expression.includes('Ctx 120/')), 'changed metrics');
+  assert.equal(server.requests.some(r => r.params?.expression?.includes('function applyTheme')), false);
+  fs.writeFileSync(path.join(dir, 'theme', '.state', 'stop'), 'stop');
+  assert.equal(await proc.exited, 0, proc.stderr());
+});
 
 test('managed daemon replaces document scripts on hot reload and disposes before stopping', { timeout: 20000 }, async t => {
   const dir = fixture(t), server = await mockCdp();

@@ -8,14 +8,13 @@ A lightweight, zero-dependency Node.js injector suite for **Antigravity 2.0**.
 
 | Module | Command | Features |
 | --- | --- | --- |
-| `limits` | `npm run inject:limits` | Weekly and 5-hour account quota, model-group switching, reset times, hover details, and pill/battery skins. Polls every 5 seconds. |
-| `rail` | `npm run inject:rail` | A floating conversation rail with turn titles, response summaries, direct jumps, and current-turn tracking. |
+| `limits` | `npm run inject:limits` | Weekly and 5-hour account quota pills, model-group switching, reset times, and hover details. Polls every 5 seconds. |
 | `font` | `npm run inject:font` | Anthropic Sans / Sarasa UI SC for conversation text and Maple Mono NF for code blocks and Monaco. Fonts are not bundled. |
-| `theme` | `npm run inject:theme` | Three warm light presets, composer hover/focus borders, session metrics, settings/zoom workarounds, and hot reload. Runs until stopped. |
+| `theme` | `npm run inject:theme` | Three warm light presets, composer hover/focus borders, session metrics, settings/zoom workarounds, and one-shot injection. Exits after injection. |
 
 The theme adapts [Chuanban v5.0.0](https://github.com/Anarcadia/chuanban-antigravity-theme-patch/tree/b319dba8dcc4f8b5bef38aef810cb530ace192a8) without its translation engine or dictionary. Font families remain controlled by `font`, preserving the current Sans/Sarasa + Maple Mono choice. See [theme/UPSTREAM.md](theme/UPSTREAM.md).
 
-The previous `skills`, three `theme-*` modules, and `enhancements` module have been removed. Select a theme preset through configuration; settings workarounds are now part of `theme`.
+The previous `rail`, `skills`, three `theme-*` modules, and `enhancements` module have been removed. Antigravity 2.0 natively provides turn rail navigation; select a theme preset through configuration; settings workarounds are now part of `theme`.
 
 ## Prerequisites
 
@@ -29,27 +28,26 @@ Run from the project directory:
 
 ```bash
 npm run inject                 # Modules enabled in config.json
-npm run inject:all             # limits, rail, font, and theme
+npm run inject:all             # limits, font, and theme
 npm run inject -- --preset claude-desktop-purewhite # Override this run's preset
 npm run inject:theme -- --preset vintage-deep      # Theme only, with a preset
-node inject.js limits rail     # Only the named modules
+node inject.js limits font     # Only the named modules
 node inject.js --no-theme       # Configured modules except theme
 node inject.js --safe-mode      # Theme defaults; bypass theme/user customizations
 node inject.js --help
 ```
 
-The default `config.json` enables all four modules:
+The default `config.json` enables all three modules:
 
 ```json
 {
   "limits": true,
-  "rail": true,
   "font": true,
   "theme": true
 }
 ```
 
-The runner manages the theme daemon as a child process. Keep the terminal running for automatic theme reconnection and hot reload. `limits` and `rail` are one-shot injectors; rerun them after a client reload if needed. The theme reuses `font`'s CSS on reconnect when that module is selected; standalone font injection remains available.
+UI injection runs once and the runner exits. Quotas poll in the page; a hidden Context worker checks database changes every 2.5 seconds. It neither watches theme files nor re-injects UI, and exits after all client windows have been absent for about 7.5 seconds. Re-running replaces the old worker; logs are in `theme/.state/metrics.log`. Re-inject after client reloads or configuration edits. On Windows, `start-antigravity.bat` launches the default installation, waits for readiness, and injects the configured modules. Node.js and an enabled local CDP port are required.
 
 ## Theme configuration
 
@@ -79,7 +77,7 @@ Edit `theme/user/config.json`:
 - Add CSS to `theme/user/custom.css`, or set CSS variables such as `--ag-chat-font-size` in `themeVars`.
 - Add trusted page-context JavaScript to `theme/user/custom.js`. Register cleanup through `ctx.onDispose(callback)` or return a cleanup function. This is not a security sandbox.
 
-The daemon checks these files every 2.5 seconds. Safe mode bypasses theme user configuration, CSS, and JavaScript; it does not disable other selected injectors.
+Re-run injection after editing these files. Safe mode bypasses theme user configuration, CSS, and JavaScript; it does not disable other selected injectors.
 
 ## Revert
 
@@ -89,7 +87,7 @@ npm run revert
 node inject.js --revert --reload
 ```
 
-Revert requests daemon shutdown before removing injected UI, observers, and theme hooks. Reloading alone does not keep the theme disabled while its daemon is running, because it reinjects the theme.
+Revert stops any older managed daemon before removing injected UI, observers, and theme hooks. A client reload also clears one-shot injections.
 
 ## Optional management commands
 
@@ -112,7 +110,6 @@ Existing quota UI previews:
 
 ![Limits indicator](assets/preview.png)
 ![Quota hover details](assets/hover.png)
-![Battery skin](assets/battery_skin.png)
 
 ## License
 

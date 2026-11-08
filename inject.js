@@ -18,14 +18,6 @@ const MODULES = {
         defaultEnabled: true,
         isDaemon: false,
     },
-    rail: {
-        id: 'rail',
-        file: 'inject-turn-rail.js',
-        name: 'Turn Rail Navigator',
-        description: 'Sidebar turn navigation timeline',
-        defaultEnabled: true,
-        isDaemon: false,
-    },
     font: {
         id: 'font',
         file: 'inject-font.js',
@@ -40,7 +32,7 @@ const MODULES = {
         name: 'Theme & Session Metrics',
         description: 'Warm-paper presets, composer interactions & local session metrics',
         defaultEnabled: true,
-        isDaemon: true,
+        isDaemon: false,
     },
 };
 
@@ -48,11 +40,11 @@ const MODULES = {
 const ALIASES = {
     limit: 'limits',
     quota: 'limits',
-    turnrail: 'rail',
     fonts: 'font',
 };
 
 const REMOVED_MODULES = new Set([
+    'rail', 'turnrail',
     'skills', 'skill', 'theme-contrast', 'contrast', 'theme:contrast',
     'theme-white', 'purewhite', 'white', 'theme:white',
     'theme-vintage', 'vintage', 'theme:vintage', 'enhancements', 'enhancement', 'guard',
@@ -63,6 +55,9 @@ function normalizeModuleId(name) {
     if (MODULES[lower]) return lower;
     if (ALIASES[lower]) return ALIASES[lower];
     if (REMOVED_MODULES.has(lower)) {
+        if (lower === 'rail' || lower === 'turnrail') {
+            throw new Error(`Module "${lower}" has been removed because Antigravity now supports conversation turn navigation natively.`);
+        }
         throw new Error(`Module "${lower}" has been removed. Use "theme" for presets and interaction fixes; the skills manager is no longer included.`);
     }
     throw new Error(`Unknown module or option "${name}". Run node inject.js --help for available options.`);
@@ -87,22 +82,18 @@ Options:
   -c, --config <file>  Specify custom configuration file (default: config.json)
   --limits             Enable quota limits indicator
   --no-limits          Disable quota limits indicator
-  --theme              Enable theme & session metrics daemon
+  --theme              Inject theme & session metrics snapshot
   --no-theme           Disable theme & session metrics daemon
   --preset <name>      Override the theme preset for this run
                        high-contrast | claude-desktop-purewhite | vintage-deep
   --safe-mode          Start theme without user customizations
   --wait-for-client    Wait for Antigravity before injecting (used by autostart)
-  --rail               Enable turn rail navigator
-  --no-rail            Disable turn rail navigator
   --font               Enable custom typography
   --no-font            Disable custom typography
 
 Available Modules:
   limits   ${MODULES.limits.name}
            ${MODULES.limits.description}
-  rail     ${MODULES.rail.name}
-           ${MODULES.rail.description}
   font     ${MODULES.font.name}
            ${MODULES.font.description}
   theme    ${MODULES.theme.name}
@@ -111,7 +102,7 @@ Available Modules:
 Examples:
   node inject.js                  # Run modules enabled in config.json
   node inject.js --all            # Run all modules
-  node inject.js limits rail      # Run only limits and rail
+  node inject.js limits font      # Run only limits and font
   node inject.js --no-theme       # Run config.json modules excluding theme
   node inject.js theme --safe-mode # Run the bundled theme without user customizations
   node inject.js --preset vintage-deep # Use the vintage preset without editing config
@@ -353,7 +344,7 @@ function runChildScript(modDef, scriptArgs = []) {
         if (modDef.isDaemon) {
             child.on('message', (message) => {
                 if (message && message.type === 'ready') {
-                    finish({ success: true, isDaemon: true });
+                    finish({ success: true, isDaemon: false });
                 }
             });
             startupTimer = setTimeout(() => {
@@ -483,35 +474,9 @@ async function main() {
         } else await getTargets();
     }
 
-    // Separate modules into one-shot injectors and long-running daemons
-    const oneShotModules = [];
-    const daemonModules = [];
-
-    for (const key of enabledList) {
-        const modDef = MODULES[key];
-        if (modDef.isDaemon) {
-            daemonModules.push(modDef);
-        } else {
-            oneShotModules.push(modDef);
-        }
-    }
-
-    // 1. Run one-shot modules sequentially
-    for (let i = 0; i < oneShotModules.length; i++) {
-        const mod = oneShotModules[i];
-        console.log(`\n[${i + 1}/${enabledList.length}] Injecting ${mod.name} (${mod.file})...`);
-        const result = await runChildScript(mod);
-        if (!result.success) {
-            throw new Error(`${mod.name} failed. Remaining modules were not started.`);
-        }
-    }
-
-    // 2. Run daemon modules and wait for readiness
-    let hasRunningDaemon = false;
-    for (let i = 0; i < daemonModules.length; i++) {
-        const mod = daemonModules[i];
-        const stepNum = oneShotModules.length + i + 1;
-        console.log(`\n[${stepNum}/${enabledList.length}] Launching ${mod.name} (${mod.file})...`);
+    for (let i = 0; i < enabledList.length; i++) {
+        const mod = MODULES[enabledList[i]];
+        console.log(`Injecting ${mod.name} (${mod.file})...`);
         const scriptArgs = [];
         if (mod.id === 'theme') {
             if (preset !== null) scriptArgs.push('--preset', preset);
@@ -519,26 +484,10 @@ async function main() {
             if (!finalEnabled.font) scriptArgs.push('--no-font');
         }
         const result = await runChildScript(mod, scriptArgs);
-        if (!result.success) {
-            throw new Error(`${mod.name} failed to start.`);
-        }
-        if (result.isDaemon) {
-            hasRunningDaemon = true;
-        }
+        if (!result.success) throw new Error(`${mod.name} failed. Remaining modules were not started.`);
     }
+    console.log('All selected modules injected successfully.');
 
-    console.log('\n======================================================');
-    if (hasRunningDaemon) {
-        console.log('\x1b[32m✔ Selected modules started successfully!\x1b[0m');
-        console.log('• Theme & Session Metrics daemon is active.');
-        console.log('• Press Ctrl+C at any time to exit.');
-        console.log('======================================================\n');
-        // Keep process open waiting for interrupt
-    } else {
-        console.log('\x1b[32m✔ All selected modules injected successfully!\x1b[0m');
-        console.log('======================================================\n');
-        process.exit(0);
-    }
 }
 
 main().catch(async (err) => {
