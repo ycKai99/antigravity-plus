@@ -139,7 +139,7 @@ async function verify() {
   const windows = await Promise.all(pages.map(inspect));
   const ok = windows.length > 0 && windows.every(window =>
     window.style && window.version?.startsWith('antigravity-plus-theme-v1-') &&
-    ['high-contrast', 'claude-desktop-purewhite', 'vintage-deep'].includes(window.preset));
+    ['high-contrast', 'claude-desktop-purewhite', 'vintage-deep', 'high-contrast-dark'].includes(window.preset));
   console.log(JSON.stringify({ ok, windows, scope: 'Runtime markers only; does not prove visual rendering or metric accuracy.' }, null, 2));
   if (!ok) process.exitCode = 1;
 }

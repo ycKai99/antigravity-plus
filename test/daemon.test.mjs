@@ -176,7 +176,7 @@ test('safe mode omits user CSS/JS and no-font omits typography', { timeout: 1000
   assert.ok(!injection.includes('userSecretMarker'));
   assert.ok(!injection.includes('user-secret-marker'));
   assert.ok(!injection.includes('Maple Mono NF'));
-  assert.ok(injection.includes('"preset":"high-contrast"'));
+  assert.ok(injection.includes('"preset":"high-contrast-dark"'));
 });
 
 test('CDP script exceptions fail one-shot injection instead of reporting success', { timeout: 10000 }, async t => {
@@ -234,7 +234,7 @@ test('CLI preset keeps precedence across user configuration hot reloads', { time
 });
 
 test('direct theme injection supports each preset, including safe mode', { timeout: 10000 }, async t => {
-  for (const preset of ['high-contrast', 'claude-desktop-purewhite', 'vintage-deep']) {
+  for (const preset of ['high-contrast', 'claude-desktop-purewhite', 'vintage-deep', 'high-contrast-dark']) {
     const dir = fixture(t), server = await mockCdp(); t.after(() => server.close());
     const proc = start(dir, server, ['--once', '--safe-mode', '--preset=' + preset]);
     assert.equal(await proc.exited, 0, proc.stderr());

@@ -10,7 +10,7 @@ A lightweight, zero-dependency Node.js injector suite for **Antigravity 2.0**.
 | --- | --- | --- |
 | `limits` | `npm run inject:limits` | Weekly and 5-hour account quota pills, model-group switching, reset times, and hover details. Polls every 5 seconds. |
 | `font` | `npm run inject:font` | Anthropic Sans / Sarasa UI SC for conversation text and Maple Mono NF for code blocks and Monaco. Fonts are not bundled. |
-| `theme` | `npm run inject:theme` | Three warm light presets, composer hover/focus borders, session metrics, settings/zoom workarounds, and one-shot injection. Exits after injection. |
+| `theme` | `npm run inject:theme` | Three original light presets plus a default warm dark preset, native composer styling, session metrics, settings/zoom workarounds, and one-shot injection. Exits after injection. |
 
 The theme adapts [Chuanban v5.0.0](https://github.com/Anarcadia/chuanban-antigravity-theme-patch/tree/b319dba8dcc4f8b5bef38aef810cb530ace192a8) without its translation engine or dictionary. Font families remain controlled by `font`, preserving the current Sans/Sarasa + Maple Mono choice. See [theme/UPSTREAM.md](theme/UPSTREAM.md).
 
@@ -30,7 +30,7 @@ Run from the project directory:
 npm run inject                 # Modules enabled in config.json
 npm run inject:all             # limits, font, and theme
 npm run inject -- --preset claude-desktop-purewhite # Override this run's preset
-npm run inject:theme -- --preset vintage-deep      # Theme only, with a preset
+npm run inject:theme -- --preset high-contrast-dark # Theme only, in warm dark colors
 node inject.js limits font     # Only the named modules
 node inject.js --no-theme       # Configured modules except theme
 node inject.js --safe-mode      # Theme defaults; bypass theme/user customizations
@@ -57,11 +57,10 @@ Edit `theme/user/config.json`:
 {
   "enabled": true,
   "channel": "auto",
-  "preset": "high-contrast",
+  "preset": "high-contrast-dark",
   "contextLimit": 256000,
   "modules": {
     "metrics": true,
-    "composerWaxSeal": true,
     "deadlockHealer": true,
     "customCss": true,
     "customJs": true
@@ -70,7 +69,7 @@ Edit `theme/user/config.json`:
 }
 ```
 
-- Presets: `high-contrast`, `claude-desktop-purewhite`, and `vintage-deep`. All three are light/warm palettes; `vintage-deep` is parchment-colored, not dark mode.
+- Presets: `high-contrast-dark` is the default warm charcoal preset. The original `high-contrast` (warm high-contrast white), `claude-desktop-purewhite` (pure white), and `vintage-deep` (light parchment) remain available with their original colors. The dark preset covers the sidebar, menus, metrics, and quota panel without changing native theme settings. The composer uses native styling and layout, retaining native surface and matching text colors captured before injection; its custom borders, shadows, button colors, typography, and voice-state overrides have been removed. Switch presets or revert injection to remove dark styles.
 - `--preset <name>` (or `--preset=<name>`) overrides the configured preset for the current process, including during hot reload and safe mode. It does not edit the configuration file. Without this argument, the configured preset is used. The runner requires the `theme` module to be enabled when passing a preset.
 - Channels: `auto`, `stable`, or `insiders` for theme target discovery.
 - Metrics show generation speed, time to first token, context usage, output tokens, and hover details including cache use and session totals. They read conversation SQLite databases in read-only mode and depend on Antigravity's internal schema. `contextLimit` is configured capacity, not automatic model-capacity detection.
@@ -78,6 +77,8 @@ Edit `theme/user/config.json`:
 - Add trusted page-context JavaScript to `theme/user/custom.js`. Register cleanup through `ctx.onDispose(callback)` or return a cleanup function. This is not a security sandbox.
 
 Re-run injection after editing these files. Safe mode bypasses theme user configuration, CSS, and JavaScript; it does not disable other selected injectors.
+
+The legacy `composerWaxSeal` setting is still accepted for compatibility but no longer changes composer styling.
 
 ## Revert
 

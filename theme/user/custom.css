@@ -5,11 +5,6 @@
   display: none !important;
 }
 
-/* 恢复输入框底栏高度 */
-#antigravity\.agentSidePanelInputBox [data-ag-row-mode="bottom"] {
-  height: auto !important;
-}
-
 /* Claude Code 风格 Context 仪表盘（常驻于 Overview Panel 下方） */
 #ag-live-metrics-tooltip:not(:empty) {
   position: relative !important;

@@ -81,7 +81,8 @@ test('uninstall/revert stop requests also stop a runner waiting for the client',
 test('runner forwards split and equals preset arguments to the theme without changing configuration', { timeout: 15000 }, async t => {
   for (const [preset, flag] of [
     ['claude-desktop-purewhite', ['--preset', 'claude-desktop-purewhite']],
-    ['vintage-deep', ['--preset=vintage-deep']]
+    ['vintage-deep', ['--preset=vintage-deep']],
+    ['high-contrast-dark', ['--preset', 'high-contrast-dark']]
   ]) {
     const dir = fixture(t), server = await mockCdp(); t.after(() => server.close());
     portFile(dir, 'Antigravity', server.port);

@@ -72,7 +72,7 @@ function loadUserConfig() {
   const user = SAFE_MODE ? {} : readJson(path.join(USER_DIR, 'config.json'));
   if (!user || typeof user !== 'object' || Array.isArray(user)) throw new Error('Theme config must be an object');
   const cfg = {
-    enabled: true, channel: 'auto', preset: 'high-contrast', contextLimit: 256000,
+    enabled: true, channel: 'auto', preset: 'high-contrast-dark', contextLimit: 256000,
     themeVars: {}, selectors: {}, ...user,
     modules: { ...DEFAULT_MODULES, ...user.modules }
   };

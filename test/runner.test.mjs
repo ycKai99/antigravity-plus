@@ -99,7 +99,7 @@ test('preset arguments reject missing or unsupported values before creating conf
 });
 
 test('both preset argument forms require an enabled theme module', t => {
-  for (const args of [['--preset', 'vintage-deep'], ['--preset=claude-desktop-purewhite']]) {
+  for (const args of [['--preset', 'vintage-deep'], ['--preset=claude-desktop-purewhite'], ['--preset', 'high-contrast-dark'], ['--preset=high-contrast-dark']]) {
     const result = isolatedCli(t, args, allDisabled);
     assert.notEqual(result.status, 0);
     assert.match(result.output, /--preset requires the theme module/);

@@ -40,7 +40,7 @@
   const cleanups = [];
   const originalGlobals = new Map();
   const html = document.documentElement;
-  const attributes = ['data-ag-preset', 'data-ag-page-type', 'data-ag-wax-seal', 'data-ag-os', 'data-ag-custom-font-size'];
+  const attributes = ['data-ag-preset', 'data-ag-page-type', 'data-ag-os', 'data-ag-custom-font-size'];
   const oldAttributes = new Map(attributes.map(name => [name, html.getAttribute(name)]));
   const oldVars = new Map();
   const rows = new Map();
@@ -109,7 +109,14 @@
     setGlobal(name, window[name]);
   }
 
+  // Keep native composer surfaces while the surrounding page uses the patch palette.
+  const nativeColors = getComputedStyle(document.body);
+  const composerColors = ['--background', '--foreground', '--card', '--card-foreground', '--card-border', '--secondary', '--secondary-foreground', '--muted', '--muted-foreground', '--input', '--accent', '--accent-foreground']
+    .map(name => [name, nativeColors.getPropertyValue(name).trim()])
+    .filter(([, value]) => value)
+    .map(([name, value]) => `${name}: ${value} !important;`).join('\n');
   addStyle('ag-custom-fonts', boot.cssText);
+  addStyle('antigravity-native-composer-colors', `[id="${SELECTORS.inputBoxId}"], .surface-composer { ${composerColors} }`);
   if (boot.fontCss && !document.getElementById('antigravity-custom-font-style')) {
     addStyle('antigravity-custom-font-style', boot.fontCss);
   }
@@ -119,12 +126,11 @@
     html.style.setProperty(name, value);
   }
   if (boot.themeVars['--ag-chat-font-size']) html.setAttribute('data-ag-custom-font-size', 'true');
-  html.setAttribute('data-ag-wax-seal', MODULES.composerWaxSeal ? 'on' : 'off');
   html.setAttribute('data-ag-os', boot.platform);
 
   // Keep native theme-preset-light valid; store the selected patch preset separately.
   const customPresets = new Set([
-    'high-contrast', 'claude-desktop-purewhite', 'vintage-deep',
+    'high-contrast', 'claude-desktop-purewhite', 'vintage-deep', 'high-contrast-dark',
     'chuanban-warm-white', 'claude-desktop-official', 'absoulutely-chuanban'
   ]);
   const storagePrototype = Storage.prototype;

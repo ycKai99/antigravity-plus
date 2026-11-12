@@ -44,6 +44,20 @@ test('hot reload/dispose restores native hooks, storage, CSS variables and liste
   assert.deepEqual(f.errors, []);
 });
 
+test('composer retains native surface colors and removes the override on dispose', () => {
+  const f = browserFixture();
+  f.body.style.setProperty('--card', '#303030');
+  f.body.style.setProperty('--background', '#202020');
+  apply(f);
+  const style = f.document.getElementById('antigravity-native-composer-colors');
+  assert.match(style.textContent, /--card: #303030 !important/);
+  assert.match(style.textContent, /--background: #202020 !important/);
+  apply(f, { version: 'reloaded' });
+  assert.equal(f.document.querySelectorAll('#antigravity-native-composer-colors').length, 1);
+  f.window.__antigravity_theme_dispose();
+  assert.equal(f.document.getElementById('antigravity-native-composer-colors'), null);
+});
+
 test('storage-denied documents still initialize, reload and dispose the theme', () => {
   const f = browserFixture();
   const originalGet = f.Storage.prototype.getItem;
@@ -118,8 +132,10 @@ test('settings and zoom guards handle their concrete failures and fully detach',
   f.window.electronNative = { zoomIn() { zoom++; } };
   f.window.dispatch('keydown', { ctrlKey: true, code: 'Equal', preventDefault() { prevented++; }, stopPropagation() {} });
   assert.equal(zoom, 1); assert.equal(prevented, 1);
-  f.context.localStorage.setItem('theme-preset-light', 'vintage-deep');
-  assert.equal(f.context.localStorage.getItem('theme-preset-light'), 'Default Light');
+  for (const preset of ['vintage-deep', 'high-contrast-dark']) {
+    f.context.localStorage.setItem('theme-preset-light', preset);
+    assert.equal(f.context.localStorage.getItem('theme-preset-light'), 'Default Light');
+  }
   f.window.__antigravity_theme_dispose();
   f.context.localStorage.setItem('theme-preset-light', 'vintage-deep');
   assert.equal(f.context.localStorage.getItem('theme-preset-light'), 'vintage-deep');

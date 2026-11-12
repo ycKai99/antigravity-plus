@@ -1,4 +1,4 @@
-const PRESETS = ['high-contrast', 'claude-desktop-purewhite', 'vintage-deep'];
+const PRESETS = ['high-contrast', 'claude-desktop-purewhite', 'vintage-deep', 'high-contrast-dark'];
 
 function readPresetArg(args) {
     let preset = null;

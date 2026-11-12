@@ -1,6 +1,6 @@
 {
   "name": "antigravity-plus",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "A zero-dependency injector suite providing Quota Limits, Custom Fonts, Themes and Session Metrics for Antigravity 2.0.",
   "main": "inject-limits.js",
   "scripts": {

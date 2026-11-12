@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-11-12
+
+### Added
+
+- Warm dark `high-contrast-dark` preset with charcoal background, muted dark sidebar, high-contrast foreground text, and themed quota indicator styling.
+- Enabled `high-contrast-dark` as the default theme preset in shipped configuration.
+- Native composer color protection preserving native background and text surfaces while the outer page uses the selected patch palette.
+
+### Changed
+
+- Replaced custom wax seal composer borders, shadows, button colors, typography, and voice-state overrides with native Antigravity composer styling.
+- Retained compatibility for the legacy `composerWaxSeal` setting while ignoring it during theme styling.
+
 ## [3.0.1] - 2026-11-08
 
 ### Fixed

@@ -1,7 +1,7 @@
 {
   "enabled": true,
   "channel": "auto",
-  "preset": "high-contrast",
+  "preset": "high-contrast-dark",
   "preset2": "claude-desktop-purewhite",
   "preset3": "vintage-deep",
   "contextLimit": 256000,

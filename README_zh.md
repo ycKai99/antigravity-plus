@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | `limits` | `npm run inject:limits` | 账号周额度和 5 小时额度胶囊、模型组切换、重置时间及悬浮详情，每 5 秒查询。 |
 | `font` | `npm run inject:font` | 对话正文使用 Anthropic Sans／Sarasa UI SC，代码块和 Monaco 使用 Maple Mono NF，不附带字体文件。 |
-| `theme` | `npm run inject:theme` | 三套暖色浅色主题、输入框悬停／聚焦边框、会话性能指标、设置及缩放修复、一次性注入，完成后退出。 |
+| `theme` | `npm run inject:theme` | 保留原有三套浅色主题，新增并默认选择暖灰深色主题，输入栏使用原生样式，提供会话性能指标、设置及缩放修复、一次性注入，完成后退出。 |
 
 主题模块基于[船板 v5.0.0](https://github.com/Anarcadia/chuanban-antigravity-theme-patch/tree/b319dba8dcc4f8b5bef38aef810cb530ace192a8) 改编，不包含汉化引擎或词典。字体仍由 `font` 模块负责，保留当前 Sans／Sarasa + Maple Mono 方案。来源与署名见 [theme/UPSTREAM.md](theme/UPSTREAM.md)。
 
@@ -30,7 +30,7 @@
 npm run inject                 # 按 config.json 启用模块
 npm run inject:all             # 启用 limits、font、theme
 npm run inject -- --preset claude-desktop-purewhite # 本次使用净白主题
-npm run inject:theme -- --preset vintage-deep      # 单独启动羊皮纸主题
+npm run inject:theme -- --preset high-contrast-dark # 单独注入暖灰深色主题
 node inject.js limits font     # 仅启用指定模块
 node inject.js --no-theme       # 按配置运行，但关闭 theme
 node inject.js --safe-mode      # 主题使用默认配置，跳过 theme/user 定制
@@ -59,11 +59,10 @@ Windows 双击 `start-antigravity.bat`，即可启动 `%LOCALAPPDATA%\Programs\A
 {
   "enabled": true,
   "channel": "auto",
-  "preset": "high-contrast",
+  "preset": "high-contrast-dark",
   "contextLimit": 256000,
   "modules": {
     "metrics": true,
-    "composerWaxSeal": true,
     "deadlockHealer": true,
     "customCss": true,
     "customJs": true
@@ -72,7 +71,7 @@ Windows 双击 `start-antigravity.bat`，即可启动 `%LOCALAPPDATA%\Programs\A
 }
 ```
 
-- 预设：`high-contrast`、`claude-desktop-purewhite`、`vintage-deep`。三套均为浅色暖纸配色，`vintage-deep` 是羊皮纸色，不是深色模式。
+- 预设：新增的 `high-contrast-dark` 为默认暖灰深色主题。原有 `high-contrast`（高对比暖白）、`claude-desktop-purewhite`（净白）、`vintage-deep`（浅色羊皮纸）均保留原配色。深色预设覆盖侧栏、菜单、指标和额度面板，不修改客户端原生主题设置。输入栏使用原生样式与布局，背景与配套文字颜色保留注入前的客户端原生配色；已移除其自定义边框、阴影、按钮配色、字体排版及语音状态覆盖。切换预设或撤销注入即可移除深色样式。
 - `--preset <名称>`（或 `--preset=<名称>`）优先于配置中的预设，且在本次进程的热重载和安全模式中保持生效，不会改写配置文件。未传参数时使用配置中的预设；通过统一运行器传入时，需要启用 `theme` 模块。
 - 通道：`auto`、`stable` 或 `insiders`，用于主题窗口发现。
 - 指标显示生成速度、首字耗时、上下文用量及输出 Token；悬浮详情包含缓存使用和会话累计数据。指标只读访问本地会话 SQLite 数据库，依赖 Antigravity 的内部格式。`contextLimit` 是手动配置的容量，不会自动识别模型上限。
@@ -80,6 +79,8 @@ Windows 双击 `start-antigravity.bat`，即可启动 `%LOCALAPPDATA%\Programs\A
 - 在 `theme/user/custom.js` 编写受信任的页面脚本；使用 `ctx.onDispose(callback)` 或返回清理函数，以支持热重载和撤销。该扩展不提供安全沙箱。
 
 修改文件后需重新注入。安全模式跳过主题用户配置、CSS 和 JavaScript，不会关闭其他已选注入模块。
+
+旧配置项 `composerWaxSeal` 仍可保留以兼容现有配置，但不再改变输入栏样式。
 
 ## 撤销注入
 

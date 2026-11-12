@@ -30,7 +30,7 @@ const MODULES = {
         id: 'theme',
         file: 'inject-theme.mjs',
         name: 'Theme & Session Metrics',
-        description: 'Warm-paper presets, composer interactions & local session metrics',
+        description: 'Light/dark presets, native composer styling & local session metrics',
         defaultEnabled: true,
         isDaemon: false,
     },
@@ -85,7 +85,7 @@ Options:
   --theme              Inject theme & session metrics snapshot
   --no-theme           Disable theme & session metrics daemon
   --preset <name>      Override the theme preset for this run
-                       high-contrast | claude-desktop-purewhite | vintage-deep
+                       high-contrast | claude-desktop-purewhite | vintage-deep | high-contrast-dark
   --safe-mode          Start theme without user customizations
   --wait-for-client    Wait for Antigravity before injecting (used by autostart)
   --font               Enable custom typography
@@ -105,7 +105,7 @@ Examples:
   node inject.js limits font      # Run only limits and font
   node inject.js --no-theme       # Run config.json modules excluding theme
   node inject.js theme --safe-mode # Run the bundled theme without user customizations
-  node inject.js --preset vintage-deep # Use the vintage preset without editing config
+  node inject.js --preset high-contrast-dark # Use warm dark colors without editing config
   node inject.js --revert         # Hot-revert all injected modifications
   node inject.js --revert --reload # Revert and reload Antigravity windows
 `);

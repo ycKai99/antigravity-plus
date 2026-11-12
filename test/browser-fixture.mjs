@@ -130,6 +130,7 @@ export function browserFixture() {
     window, document, Storage, localStorage: new Storage(), history, URL, URLSearchParams,
     get location() { return location; },
     ResizeObserver,
+    getComputedStyle: element => element.style,
     requestAnimationFrame(callback) { const id = ++timerId; rafs.set(id, callback); return id; },
     cancelAnimationFrame(id) { rafs.delete(id); },
     setInterval(callback) { const id = ++timerId; intervals.set(id, callback); return id; },
